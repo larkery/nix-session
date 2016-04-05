@@ -1,0 +1,257 @@
+#!/usr/bin/env nix-shell
+#! nix-shell -i python -p python python27Packages.notmuch
+
+from __future__ import print_function
+import notmuch, os, shutil, sys
+import uuid
+import re
+
+base_maildir = '/home/hinton/session/mail/'
+
+def md(p):
+    return os.path.relpath(os.path.dirname(os.path.dirname(p)), base_maildir)
+
+def mbsync_uid(fn):
+    fn = os.path.basename(fn)
+    [nam, flags] = fn.split(':')
+    return int((nam.split(',')[1])[2:])
+
+# def change_uid(fn, uid):
+#     fn = os.path.basename(fn)
+#     [nam, flags] = fn.split(':')
+#     nam = nam.split(',')
+#     nam[1] = 'U=' + str(uid)
+#     return ':'.join([','.join(nam), flags])
+
+def generate_name(fn):
+    fn = os.path.basename(fn)
+    flags = fn.split(':')[-1]
+    return 'refile-' + str(uuid.uuid1()) + ':' + flags
+
+def refile(mail, dest):
+    # also need to update the uidvalidity in the maildir or
+    # mbsync will reuse the uid and we will all be in a bad place.
+    # the first lin in uidvalidity looks like a unix timestamp
+    # but what is it for?
+    #uvfile = os.path.join(os.path.join(base_maildir, dest), '.uidvalidity')
+    dest = os.path.join(os.path.join(base_maildir, dest), 'cur')
+    mailname = os.path.basename(dest)
+    #maybe I should not be touching the uid validity thing at all?
+    # try:
+    #     with open(uvfile) as uiv:
+    #         lines = uiv.readlines()
+    #     new_uid = int(lines[1]) + 1
+    #     lines[1] = str(new_uid)
+    #     with open(uvfile, 'w') as uiv:
+    #         uiv.writelines(lines)
+    # except:
+    #     new_uid = max([mbsync_uid(fn) for fn in os.listdir(dest)]) + 2
+    #     print('could not read uidvalidity, might wreck stuff', uvfile, file=sys.stderr)
+    new_name = generate_name(mail)
+    new_name = os.path.join(dest, new_name)
+    shutil.move(mail, new_name)
+    return new_name
+
+def refile_to(path):
+    def refiler(msg, db):
+        affected = []
+        files = [str(x) for x in msg.get_filenames()]
+
+        for fn in files:
+            if md(fn) == path:
+                break
+        else:
+            for fn in files:
+                fn2 = refile(fn, path)
+                db.add_message(fn2)
+                db.remove_message(fn)
+                affected.append(md(fn))
+                affected.append(md(fn2))
+            return affected
+
+        # if we get here, that means that the loop above broke
+        # in which case there is a file already in the target maildir.
+        # this means we can just delete all the non-matching files
+        # rather than refiling them all into the archive.
+        for fn in files:
+            if md(fn) != path:
+                affected.append(md(fn))
+                db.remove_message(fn)
+                os.remove(fn)
+
+        return affected
+
+    refiler.__name__='refile_to(' + path + ')'
+    return refiler
+
+def delete(msg, db):
+    result = []
+    for fn in msg.get_filenames():
+        db.remove_message(fn)
+        result.append(md(fn))
+        os.remove(fn)
+    return result
+
+def remove_tag(tag):
+    def untagger(m, db):
+        m.remove_tag(tag)
+        return []
+    untagger.__name__ = 'untag(' + tag + ')'
+    return untagger
+
+def add_tag(tag):
+    def tagger(m, db):
+        m.add_tag(tag)
+        return []
+    tagger.__name__ = 'tag(' + tag + ')'
+    return tagger
+
+def add_regex_tag(rxs):
+    rx = re.compile(rxs)
+    def rx_tagger(m, db):
+        result = rx.findall(m.get_header('subject'))
+        if result:
+            m.add_tag(result[0])
+        return []
+    rx_tagger.__name__ = 'rx_tag(' + rxs + ')'
+    return rx_tagger
+
+def awaken(tags, path):
+    def awakener(m, db):
+        for tag in tags:
+            m.remove_tag(tag)
+        m.remove_tag('asleep')
+        m.add_tag('inbox')
+        m.add_tag('flagged')
+        # refile
+        fn = m.get_filename()
+        fn2 = refile(fn, path)
+        db.add_message(fn2)
+        db.remove_message(fn)
+        return [md(fn), md(fn2)]
+    awakener.__name__ = 'awaken('+path+')'
+    return awakener
+
+def S(things):
+    def fn(m, db):
+        result = []
+        for thing in things:
+            result.extend(thing(m, db))
+        return result
+    fn.__name__ = 'S(' + ','.join(map(lambda x : x.__name__, things)) + ')'
+    return fn
+
+def restrict(query, actions):
+    return map(lambda (Q, A): ( '%s AND (%s)' % (query, Q) , A ),  actions)
+
+db = notmuch.Database(mode=notmuch.Database.MODE.READ_WRITE)
+
+import datetime as dt
+
+today = dt.datetime.today()
+
+def sleepy_tag(t):
+    if t.startswith('asleep-until'):
+        au = dt.datetime.strptime(t, "asleep-until-%Y-%m-%d")
+        if au <= today:
+            return True
+    return False
+
+sleepy_tags = filter(sleepy_tag, db.get_all_tags())
+
+def maildir_specific_actions(maildir, archive, trash):
+    actions = [
+        ('tag:inbox and not folder:"%s/Inbox"' % (maildir), remove_tag('inbox')),
+        ('tag:inbox and folder:"%s/Sent Items"' % (maildir), remove_tag('inbox')),
+        ('folder:"%s/Inbox" AND NOT tag:inbox' % (maildir), refile_to('%s/%s' % (maildir, archive))),
+        ('folder:"%s/%s" AND tag:inbox' % (maildir, trash), remove_tag('inbox'))
+    ]
+
+    if sleepy_tags:
+        actions = actions + (' OR '.join(map(lambda t : 'tag:'+t, sleepy_tags)), awaken(sleepy_tags, '%s/Inbox' % (maildir)))
+
+    return restrict('path:%s/**' % (maildir), actions)
+
+actions = [ ('tag:deleted', delete) ,
+            ('not tag:sent and (from:t@larkery.com or from:tom.hinton@cse.org.uk)', add_tag('sent')) ] + \
+  maildir_specific_actions('cse', 'Archives', 'Deleted Items') + \
+  maildir_specific_actions('fastmail', 'Archive', 'Trash') + \
+  [ ('path:cse/** AND subject:EXS- AND NOT tag:EXS',
+     S([add_regex_tag(r"(EXS-\d+)"), add_tag('EXS')])) ]
+
+
+def is_maildir(maildir):
+    return '.uidvalidity' in maildir[2]
+
+def fix_uids(maildir):
+    if not is_maildir(maildir):
+        return
+    for f in ['cur', 'new', 'tmp']:
+        d = os.path.join(maildir[0], f)
+        files = os.listdir(d)
+        uids = [mbsync_uid(fn) for fn in files]
+        if len(files) != len(set(uids)):
+            print('renumber', d, file=sys.stderr)
+            for ix, fn in enumerate(sorted(zip(uids, files))):
+                new_fn = change_uid(fn[1], ix+1)
+                shutil.move(os.path.join(d, fn[1]),
+                            os.path.join(d, new_fn))
+            max_uid = len(files)
+            # fix uidvalidity
+            uvf = os.path.join(maildir[0], '.uidvalidity')
+            with open(uvf) as f:
+                lines = f.readlines()
+                print(lines, file=sys.stderr)
+            with open(uvf, 'w') as f:
+                f.writelines([lines[0], str(max_uid)])
+
+def channel_name(maildir):
+    parts = maildir.split('/')
+    return parts[0] + ':' + '/'.join(parts[1:])
+
+if __name__ == "__main__":
+    if '-f' in sys.argv:
+        # fix maildir uid schemes
+        print("fixing maildir uid schemes", file=sys.stderr)
+        map(fix_uids, os.walk(base_maildir))
+    elif '-dedup' in sys.argv:
+        print("deduplicating messages", file=sys.stderr)
+        q = db.create_query("*")
+        counter = 0
+        for m in q.search_messages():
+            fns = [str(x) for x in m.get_filenames()]
+            if len(fns) > 1:
+                mds = set([md(x) for x in fns])
+                print(m)
+                if len(mds) > 1:
+                    print('\tin ' + ', '.join(mds))
+                else:
+                    print('\tall in' + list(mds)[0])
+                    for fn in fns[1:]:
+                        db.remove_message(fn)
+                        os.remove(fn)
+                counter = counter + 1
+        del q
+        print('dupes:', counter)
+    else:
+        log = '-v' in sys.argv
+        act = '-d' not in sys.argv
+
+        affected_maildirs = set()
+
+        for query, action in actions:
+            q = db.create_query(query)
+            if (log):
+                print('run %s -> %s' % (query, action.__name__), file=sys.stderr)
+            counter = 0
+            for m in q.search_messages():
+                counter = counter + 1
+                if act:
+                    affected_maildirs.update(action(m, db))
+                if not(act) or log:
+                    print('\t%s %s' % (action.__name__, m), file=sys.stderr)
+            if (log):
+                print('\t' + str(counter) + ' matched', file=sys.stderr)
+            del q
+
+        sys.stdout.write('\n'.join(map(channel_name, affected_maildirs)))

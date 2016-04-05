@@ -1,0 +1,10 @@
+xterm*background: cornsilk1
+xter*foreground: dimgray
+xterm*termName: xterm-256color
+xterm*faceName: Monospace:size=10
+xterm*font: 7x13
+xterm*bellIsUrgent: true
+xterm*locale: true
+xterm*saveLines: 4096
+xterm*eightBitInput: false
+

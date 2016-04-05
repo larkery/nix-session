@@ -1,0 +1,5 @@
+#!/bin/sh
+
+nix-env -i "$1"
+echo "$1" >> ~/session/packages
+rm .cache/dmenu_run

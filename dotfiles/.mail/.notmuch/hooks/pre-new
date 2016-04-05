@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+CHANGED=$("$HOME/session/scripts/refile" | grep -v 'fastmail:Inbox\|cse:Inbox\|cse:JIRA' | tr '\n' ' ')
+
+if [ ! "$?" -eq 0 ]
+then
+    echo "ERROR: refiler was not happy"
+fi
+
+WATCH="$HOME/.mail/last-sync"
+
+if [[ -n "$FULL" ]] || [[ ! -e "$WATCH" ]] || [[ $(date +%s -r "$WATCH") -lt $(date +%s --date="3 hours ago") ]]
+then
+    echo "full sync"
+    E=$(mbsync -q -a 2>&1)
+    touch "$WATCH"
+else
+    echo sync fastmail-inbox cse:Inbox cse:JIRA $CHANGED
+    E=$(mbsync -q fastmail-inbox cse:Inbox cse:JIRA $CHANGED 2>&1)
+fi
+
+if [ ! "$?" -eq 0 ]
+then
+    notify-send -u critical -t 0 "Mail Errors" "$E"
+fi
