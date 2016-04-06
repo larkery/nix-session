@@ -4,6 +4,7 @@
 exec --no-startup-id xsettingsd
 exec --no-startup-id pa-applet
 exec --no-startup-id nm-applet
+exec --no-startup-id cbatticon
 exec --no-startup-id emacs --daemon
 exec --no-startup-id dunst
 exec --no-startup-id xss-lock lock
@@ -68,8 +69,10 @@ bindsym $mod+shift+l focus mode_toggle
 bindsym $mod+bracketleft  workspace prev_on_output
 bindsym $mod+bracketright workspace next_on_output
 
-bindsym $mod+minus move scratchpad
-bindsym $mod+equal scratchpad show # todo maybe put a script in here
+# TODO: scripts and bar.
+bindsym $mod+minus move scratchpad, exec --no-startup-id pkill -RTMIN+1 i3blocks
+bindsym $mod+equal scratchpad show, exec --no-startup-id pkill -RTMIN+1 i3blocks
+
 bindsym $mod+b bar mode toggle
 
 # switch to workspace
@@ -117,7 +120,7 @@ bindsym $mod+Escape mode $i3_mode
 # finds out, if available)
 bar {
     font pango:Sans, FontAwesome 8
-    status_command i3status
+    status_command i3blocks
     separator_symbol "·"
     tray_padding 0
 }

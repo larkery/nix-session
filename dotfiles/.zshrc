@@ -22,7 +22,7 @@ bindkey -e
 
 autoload -U colors && colors
 
-eval $(dircolors -b)
+eval $(dircolors -b $HOME/session/dircolors.ansi-light)
 
 alias ls='ls --color'
 alias l='ls -l'
@@ -35,20 +35,32 @@ if [ -f "${HOME}/.gpg-agent-info" ]; then
   export SSH_AUTH_SOCK
 fi
 
-PROMPT="%F{blue}%~%f
-%(?,%F{black},%F{red})➙%f "
+if [ ${IN_NIX_SHELL:-0} = 1 ]; then
+    PROMPT="%F{red}%~%f
+%(?,%F{black},%F{red})➤%f "
+else
+    PROMPT="%F{blue}%~%f
+%(?,%F{black},%F{red})➤%f "
 
-preexec() {
-    _STARTED=$(date +%s)
-}
+fi
 
-precmd() {
-    if ! [ -z "$_STARTED" ]; then
-        NOW=$(date +%s)
-        DELTA=$(($NOW - $_STARTED))
-        if [ $DELTA -gt 5 ]; then
-            echo -e "\a$DELTA seconds"
-        fi
-    fi
-    printf "\033];%s\07\n" "$PWD"
-}
+
+case $TERM in
+    xterm*)
+        preexec() {
+            _STARTED=$(date +%s)
+            printf "\033];%s\07" "$1"
+        }
+
+        precmd() {
+            if ! [ -z "$_STARTED" ]; then
+                NOW=$(date +%s)
+                DELTA=$(($NOW - $_STARTED))
+                if [ $DELTA -gt 5 ]; then
+                    echo -e "\a$DELTA seconds"
+                fi
+            fi
+            print -Pn "\e]0;%~\a"
+        }
+        ;;
+esac

@@ -1,0 +1,41 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p jq
+
+case "$BLOCK_BUTTON" in
+    1)
+        i3-msg 'scratchpad show' > /dev/null
+        ;;
+    3)
+        i3-msg '[urgent="latest"] scratchpad show' > /dev/null
+        ;;
+    4)
+        i3-msg 'scratchpad show; scratchpad show;' > /dev/null
+        ;;
+    5)
+        i3-msg 'scratchpad show; scratchpad show;' > /dev/null
+        ;;
+    *)
+esac
+
+URGENT=$(i3-msg -t get_tree \
+                | jq -r 'recurse(.nodes[])
+  | select(.name == "__i3_scratch")
+  | .floating_nodes | map(recurse(.nodes[]))
+  | map(select(.type == "con" and .urgent))
+  | (if (.|length) == 0 then "" else (.[0] | .window_properties | .class + ": " + .title) end)')
+
+if [ -z "${URGENT}" ]; then
+    i3-msg -t get_tree \
+        | jq -r 'recurse(.nodes[])
+  | select(.name == "__i3_scratch")
+  | .floating_nodes | map(recurse(.nodes[]))
+  | map(select(.type == "con"))
+  | (if (.|length) > 0 then
+     (.[0] | .window_properties | .class + ": " + .title) + (length -1 | if . <= 0 then "" else (.|tostring|" + " + .) end)
+     else "-"
+     end)'
+else
+    echo "${URGENT}"
+    echo
+    echo "#FF0000"
+fi

@@ -1,0 +1,8 @@
+[scratchpad]
+command=/home/hinton/session/scripts/scratchpad
+interval=20
+signal=1
+
+[time]
+command=date '+%a %d %H:%M'
+interval=20
