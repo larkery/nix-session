@@ -1,6 +1,5 @@
 export ALTERNATE_EDITOR=""
 export EDITOR="emacsclient"
-export MANPATH=".nix-profile/share/man:/run/current-system/sw/share/man"
 
 gpg-connect-agent /bye
 

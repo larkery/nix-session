@@ -60,6 +60,7 @@ case $TERM in
                     echo -e "\a$DELTA seconds"
                 fi
             fi
+            _STARTED=""
             print -Pn "\e]0;%~\a"
         }
         ;;

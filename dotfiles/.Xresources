@@ -33,3 +33,11 @@ xterm*bellIsUrgent: true
 xterm*locale: true
 xterm*saveLines: 4096
 xterm*eightBitInput: false
+
+
+Xft.autohint:  0
+Xft.lcdfilter: lcddefault
+Xft.hintstyle: hintslight
+Xft.hinting:   1
+Xft.antialias: 1
+Xft.rgba:      rgb
