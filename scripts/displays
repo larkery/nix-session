@@ -1,0 +1,211 @@
+#!/usr/bin/env nix-shell
+#!nix-shell -i python -p arandr python27Packages.xcffib
+
+from __future__ import print_function
+
+import os
+import pickle
+import re
+import subprocess
+import errno
+import socket
+import xcffib
+from xcffib.xproto import *
+import select
+import xcffib.randr as RandR
+from xcffib.randr import NotifyMask, ScreenChangeNotifyEvent
+
+def dprint(*args, **kwargs):
+    print("displays.py:", *args, **kwargs)
+
+def devices():
+    with file('/proc/acpi/button/lid/LID/state') as f:
+        lid = "open" in f.readline()
+    # hash xrandr details
+    xrandr_output = subprocess.check_output(['xrandr', '--props'])
+    output_lines = xrandr_output.decode('ascii').split('\n')
+    edids = {}
+    get_edids = False
+    this_edid = ''
+    for l in output_lines:
+        if get_edids and edid_data_re.match(l):
+            this_edid += l.strip()
+        elif get_edids:
+            edids[device] = this_edid
+            this_edid = ''
+            get_edids = False
+        else:
+            m = plug_re.match(l)
+            if m:
+                device = m.group(1)
+            elif edid_re.match(l):
+                get_edids = True
+
+    return tuple(sorted(
+        {'lid' : lid, 'edids':tuple(sorted(edids.items()))}.items()
+    ))
+
+class ELoop(object):
+    def __init__(self):
+        self.epoll = select.epoll()
+        self.callbacks = {}
+
+    def register(self, fh, cb):
+        self.callbacks[fh] = cb
+        self.epoll.register(fh, select.POLLIN)
+
+    def run(self):
+        while True:
+            try:
+                events = self.epoll.poll(1)
+            except IOError as e:
+                if e.errno == errno.EINTR:
+                    continue
+                else:
+                    raise
+
+            for fileno, event in events:
+                if fileno in self.callbacks:
+                    self.callbacks[fileno]()
+                else:
+                    dprint("Unknown file handle %d" % fileno)
+
+    def unregister(self,fh):
+        self.epoll.unregister(fh)
+        del self.callbacks[fh]
+
+class RandRL(object):
+    def __init__(self, el, statem):
+        self.statem = statem
+        self.conn = xcffib.connect()
+        setup = self.conn.get_setup()
+        root = setup.roots[0]
+        self.last_event = 0
+        randr = self.conn(RandR.key)
+        randr.SelectInput(root.root, NotifyMask.ScreenChange)
+        self.conn.flush()
+        self.el = el
+        self.el.register(self.conn.get_file_descriptor(),
+                         self.x_event)
+
+    def x_event(self):
+        while True:
+            event = self.conn.poll_for_event()
+            if event:
+                if isinstance(event, ScreenChangeNotifyEvent):
+                    ## debounce events happening in the same cycle
+                    if self.last_event != event.config_timestamp:
+                        self.last_event = event.config_timestamp
+                        self.statem.displays_changed()
+            else:
+                return
+
+    def __del__(self):
+        self.el.unregister(self.conn.get_file_descriptor())
+        self.conn.disconnect()
+
+class AcpiL(object):
+    def __init__(self, el, statem):
+        self.el = el
+        self.statem = statem
+        self.s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        self.s.connect("/var/run/acpid.socket")
+        self.el.register(self.s.fileno(), self.event)
+
+    def event(self):
+        data = self.s.recv(4096).split(' ')
+
+        if data[0] == 'button/lid':
+            self.statem.lid_changed()
+
+plug_re = re.compile(r'^([A-Za-z0-9]+) (dis)?connected.+$')
+edid_re = re.compile(r'^\t+EDID: $')
+edid_data_re = re.compile(r'^\t\t[0-9a-f]{32}$')
+config_file = os.path.expanduser("~/.config/displays")
+
+class StateM:
+    def __init__(self):
+        import screenlayout.xrandr
+        self.randr = screenlayout.xrandr.XRandR()
+        self.hash = None
+        if os.path.isfile(config_file):
+            dprint('load config')
+            with open(config_file) as f:
+                self.config = pickle.load(f)
+        else:
+            dprint('new config')
+            self.config = {}
+        self.lid_changed()
+
+    def lid_changed(self):
+        self.hash = devices()
+        self.hardware_changed()
+
+    def displays_changed(self):
+        ## hash devices
+        h = devices()
+        if h != self.hash:
+            self.hash = h
+            self.hardware_changed()
+        else:
+            self.layout_changed()
+
+    def hardware_changed(self):
+        if self.hash in self.config:
+            dprint('use config for', self.hash)
+            dprint(self.config[self.hash])
+            try:
+                self.randr.load_from_string(self.config[self.hash])
+            except:
+                dprint('bad config', self.config[self.hash])
+                del self.config[self.hash]
+                self.pickle_state()
+            try:
+                os.system("pkill -STOP i3")
+                self.randr.save_to_x()
+            finally:
+                os.system("pkill -HUP i3-hideshow-bar")
+                os.system("feh --bg-fill ~/.local/wallpaper.jpg")
+                os.system("pkill -CONT i3")
+        else: #maybe turn on a screen? run arandr? beep wildly?
+            dprint('no config for', self.hash)
+            ## main screen turn on?
+            os.system("xrandr --output LVDS1 --auto")
+            ## also start arandr
+            os.system("arandr")
+            # when finished, save result?
+            self.layout_changed()
+
+    def pickle_state(self):
+        with open(config_file, 'w') as f:
+            pickle.dump(self.config, f)
+
+    def layout_changed(self):
+        # store the current layout under the hash
+        self.randr.load_from_x()
+        ser = self.randr.save_to_shellscript_string()
+        try:
+            self.randr.load_from_string(ser)
+            self.config[self.hash] = ser
+            dprint('save config', self.hash, ' as ', ser)
+            self.pickle_state()
+        except:
+            dprint('bad config produced for', self.hash)
+
+if __name__ == "__main__":
+    while True:
+        try:
+            l = ELoop()
+            s = StateM()
+            w = RandRL(l, s)
+            a = AcpiL(l, s)
+            l.run()
+        except KeyboardInterrupt:
+            import sys
+            dprint('exit due to interrupt')
+            sys.exit(0)
+        except Exception, err:
+            import traceback
+            traceback.print_exc()
+            dprint('mysterious error; restart?')
+    dprint("exit")
