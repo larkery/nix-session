@@ -29,12 +29,6 @@ alias l='ls -l'
 alias la='l -a'
 WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
-if [ -f "${HOME}/.gpg-agent-info" ]; then
-  . "${HOME}/.gpg-agent-info"
-  export GPG_AGENT_INFO
-  export SSH_AUTH_SOCK
-fi
-
 if [ ${IN_NIX_SHELL:-0} = 1 ]; then
     PROMPT="%F{red}%~%f
 %(?,%F{black},%F{red})➤%f "
@@ -44,6 +38,12 @@ else
 
 fi
 
+_gitinfo () {
+   vcprompt
+}
+
+setopt prompt_subst
+RPROMPT='$(_gitinfo)'
 
 case $TERM in
     xterm*)
@@ -65,3 +65,6 @@ case $TERM in
         }
         ;;
 esac
+
+export GPG_AGENT_INFO=$HOME/.gnupg/S.gpg-agent
+export SSH_AUTH_SOCK=$HOME/.gnupg/S.gpg-agent.ssh
