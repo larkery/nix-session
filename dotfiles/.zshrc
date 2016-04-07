@@ -39,7 +39,7 @@ else
 fi
 
 _gitinfo () {
-   vcprompt
+   vcprompt -f "[%b %u %m]"
 }
 
 setopt prompt_subst
