@@ -45,8 +45,12 @@
   services.tlp.enable = true;
 
 # these do not appear to work :/
-  services.gnome3.gvfs.enable = true;
   services.udisks2.enable = true;
+
+  nix.sshServe.enable = true;
+  nix.sshServe.keys = [ 
+    "ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAIEA22e+x7/E98K3hi4UIGLpxznIsLogYB/5Lrx4k61TIiT3bGagHKNg03nnCKA7HQVEkKKrXuIO+zuqH1RxlP5/S/2ofS+logblSgRLfA4Mgd/nhNi0Lx55E0AGS38fStIj+7kYF0pEBkgRkB+qxQZQvKFmZHUYgZrxyede4mSB2N0="
+  ];
 
   networking.networkmanager.enable = true;
   networking.networkmanager.packages = with pkgs; [networkmanager_pptp];
@@ -58,6 +62,11 @@
   services.xserver.xkbOptions = "ctrl:nocaps";
   services.xserver.windowManager.i3.enable = true;
   services.xserver.displayManager.lightdm.enable = true;
+
+  # may make manpath work?
+  environment.profileRelativeEnvVars = {
+    MANPATH = [ "/man" "/share/man" ] ;
+  };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.defaultUserShell = "/var/run/current-system/sw/bin/zsh";
