@@ -41,4 +41,6 @@ case $1 in
         [ ! -z "$U" ] && xdg-open "$U"
         ;;
     *)
+        X=$(choose "$(load .)" "account: ")
+        echo "$X" | jq -r 'keys(.)' | dmenu -1
 esac
