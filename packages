@@ -2,12 +2,10 @@ arandr-0.1.8
 cbatticon-1.4.2
 chromium-49.0.2623.110
 cifs-utils-6.4
-dconf-0.24.0
 dmenu-4.6
 dunst-1.1.0
 emacs-24.5
 file-5.25
-firefox-45.0.1esr
 git-2.7.4
 gnome-icon-theme-2.91.93
 gnupg-2.1.11
@@ -16,11 +14,11 @@ htop-2.0.0
 i3blocks-1.4
 i3lock-2.7
 isync-1.2.1
-jumanji-20150107
 libnotify-0.7.6
 libreoffice-5.1.0.3
 lndir-1.0.3
 man-pages-4.04
+most-5.0.0
 msmtp-1.6.2
 network-manager-applet-1.0.6
 notmuch-0.21
@@ -30,7 +28,6 @@ numix-icon-theme-20160120-a704451830d343670721cbf1391df18611d61901
 openjdk-8u76b00
 openssl-1.0.2g
 pa-applet-2012-04-11
-pcmanfm-1.2.3
 pinentry-0.9.7
 python3.5-ipython-4.0.3
 silver-searcher-0.31.0
@@ -40,6 +37,7 @@ vcprompt-1.2.1
 vimb-2.11
 w3m-0.5.3-2015-12-20
 which-2.21
+xclip-0.12-svn-20140209
 xkill-1.0.4
 xsettingsd-0.0.1
 xss-lock-git-2014-03-02

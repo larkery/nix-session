@@ -1,2 +1,9 @@
 set fontsize=12px
 set input-autohide=true
+set download-path=~/downloads/
+set editor-command=emacsclient -n %s
+set home-page=about:blank
+set strict-focus=false
+#back on b, next on n
+nm b <C-O>
+nm B <C-I>

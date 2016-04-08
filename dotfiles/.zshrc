@@ -68,3 +68,7 @@ esac
 
 export GPG_AGENT_INFO=$HOME/.gnupg/S.gpg-agent
 export SSH_AUTH_SOCK=$HOME/.gnupg/S.gpg-agent.ssh
+
+# need better behaviour
+#bindkey "^[[A" history-beginning-search-backward
+#bindkey "^[[B" history-beginning-search-forward

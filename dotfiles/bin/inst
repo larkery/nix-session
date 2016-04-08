@@ -1,5 +1,8 @@
 #!/bin/sh
-
-nix-env -i "$1"
-echo "$1" >> ~/session/packages
-rm .cache/dmenu_run
+if [ "$1" = -e ]; then
+    nix-env -e "$2"
+else
+    nix-env -i "$1"
+fi
+nix-env -q > ~/session/packages
+rm -f -- ~/.cache/dmenu_run
