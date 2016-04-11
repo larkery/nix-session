@@ -9,6 +9,7 @@ exec --no-startup-id emacs --daemon
 exec --no-startup-id dunst
 exec --no-startup-id xss-lock lock
 exec --no-startup-id ~/session/scripts/displays
+exec --no-startup-id xsetroot -solid gray10 -cursor_name left_ptr
 
 set $mod Mod4
 font pango:Sans 8
@@ -102,6 +103,11 @@ bindsym $mod+Shift+0 move container to workspace number 10
 
 bindsym Pause exec --no-startup-id xset s activate
 bindsym $mod+Pause exec --no-startup-id systemctl hibernate
+
+bindsym XF86MonBrightnessUp exec --no-startup-id xbacklight -inc 5
+bindsym XF86MonBrightnessDown exec --no-startup-id xbacklight -dec 5
+bindsym Shift+XF86MonBrightnessUp exec --no-startup-id xbacklight -inc 20
+bindsym Shift+XF86MonBrightnessDown exec --no-startup-id xbacklight -dec 20
 
 set $i3_mode "I3: [l]oad config, [r]estart, [e]xit || SYSTEM: [h]ibernate, [s]hutdown"
 

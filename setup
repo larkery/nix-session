@@ -1,20 +1,19 @@
 #!/usr/bin/env sh
 
-SESSION="${HOME}/session"
+DEFAULT_SESSION="${HOME}/session"
+SESSION="${SESSION_DIR:-$DEFAULT_SESSION}"
 
 cd $HOME
 
 [ -d "${SESSION}" ] || (echo "no ${SESSION}" && exit 1)
 
-while read line < "${SESSION}/packages"; do
-    nix-env -i "$line"
-done
-
-# Now we should have lndir we can put in the files
-
+nix-env -i lndir
 lndir "${SESSION}/dotfiles" .
+nix-env -i workspace
 
 # I don't know how to make these work otherwise
+
+cd
 
 ln -sf .nix-profile/share/themes .themes
 ln -sf .nix-profile/share/icons .icons
@@ -26,3 +25,5 @@ ln -sf .nix-profile/share/icons .icons
 xdg-mime default vimb.desktop x-scheme-handler/http
 xdg-mime default vimb.desktop x-scheme-handler/https
 xdg-mime default vimb.desktop text/html
+
+mkdir -p .zsh

@@ -1,5 +1,10 @@
-xterm*background: cornsilk1
-xterm*foreground: black
+#define FONT Monospace-10
+
+#define BGCOL cornsilk1
+#define FGCOL black
+
+xterm*background: BGCOL
+xterm*foreground: FGCOL
 
 !black
 xterm*color0:  #000000
@@ -27,13 +32,12 @@ xterm*color7:  #8a8a8a
 xterm*color15: #8a8a8a
 
 xterm*termName: xterm-256color
-xterm*faceName: Monospace:size=10
+xterm*faceName: FONT
 xterm*font: 7x13
 xterm*bellIsUrgent: true
 xterm*locale: true
 xterm*saveLines: 4096
 xterm*eightBitInput: false
-
 
 Xft.autohint:  0
 Xft.lcdfilter: lcddefault
@@ -41,3 +45,12 @@ Xft.hintstyle: hintslight
 Xft.hinting:   1
 Xft.antialias: 1
 Xft.rgba:      rgb
+
+Emacs*menubar: 0
+Emacs*verticalScrollBars:0
+Emacs*toolBar:0
+
+Emacs*foreground: FGCOL
+Emacs*background: BGCOL
+Emacs*FontBackend: xft
+Emacs*font: FONT

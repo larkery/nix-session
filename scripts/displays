@@ -164,8 +164,6 @@ class StateM:
                 os.system("pkill -STOP i3")
                 self.randr.save_to_x()
             finally:
-                os.system("pkill -HUP i3-hideshow-bar")
-                os.system("feh --bg-fill ~/.local/wallpaper.jpg")
                 os.system("pkill -CONT i3")
         else: #maybe turn on a screen? run arandr? beep wildly?
             dprint('no config for', self.hash)
@@ -193,19 +191,8 @@ class StateM:
             dprint('bad config produced for', self.hash)
 
 if __name__ == "__main__":
-    while True:
-        try:
-            l = ELoop()
-            s = StateM()
-            w = RandRL(l, s)
-            a = AcpiL(l, s)
-            l.run()
-        except KeyboardInterrupt:
-            import sys
-            dprint('exit due to interrupt')
-            sys.exit(0)
-        except Exception, err:
-            import traceback
-            traceback.print_exc()
-            dprint('mysterious error; restart?')
-    dprint("exit")
+    l = ELoop()
+    s = StateM()
+    w = RandRL(l, s)
+    a = AcpiL(l, s)
+    l.run()

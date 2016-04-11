@@ -12,9 +12,44 @@
        name = "workspace";
 
        paths = with pkgs; [
-         emacs
-         strace
-         msmtp
+       emacs
+       arandr
+       cbatticon
+       dmenu
+       dunst
+       file
+       git
+       gnupg21
+       gtk-engine-murrine
+       i3blocks
+       i3lock
+       isync
+       libnotify
+       man-pages
+       msmtp
+       networkmanagerapplet
+       notmuch
+       nox
+       numix-gtk-theme
+       numix-icon-theme
+       gnome.gnome_icon_theme
+       openjdk
+       openssl
+       pa_applet
+       pinentry
+       silver-searcher
+       smbnetfs
+       strace
+       vcprompt
+       vimb
+       w3m
+       which
+       xclip
+       xorg.xkill
+       xsettingsd
+       xss-lock
+       xorg.xbacklight
+       xbrightness
        ];
 
        postBuild = ''
@@ -23,9 +58,6 @@
        for infofile in "$out/share/info/"*.info*; do
           ${pkgs.texinfo}/bin/install-info "$infofile" "$out/indexes/iinfo/dir"
        done
-       echo "generating apropos index"
-       # makewhatis does not work, but to be honest maybe something else would be easier
-       # perhaps just do some kind of sqlite thing
        '';
      };
    };
