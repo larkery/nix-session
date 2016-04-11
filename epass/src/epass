@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+load() {
+    emacs -Q --batch --load epass.el --eval '(epass-file-princ-json "~/.passwords")' |
+        jq -c -r 'select('$1')'
+}
+
+choose() {
+    LINE=$(echo -E "$1" | jq -r -c .name | dmenu -i -1 -p "${2:-select}: " -l 10)
+    if [ ! -z "$LINE" ]; then
+        echo -E "$1" | sed "${LINE}q;d"
+    else
+        return 1
+    fi
+}
+
+case $1 in
+    type-user)
+        choose "$(load .USERNAME)" "$1" | jq -r .USERNAME | xdotool type --clearmodifiers --file -
+        ;;
+    type-password)
+        choose "$(load .PASSWORD)" "$1" | jq -r .PASSWORD | xdotool type --clearmodifiers --file -
+        ;;
+    type-both)
+        DATA=$(choose "$(load '.USERNAME and .PASSWORD')" "$1")
+        echo "$DATA" | jq -r .USERNAME | xdotool type --clearmodifiers --file -
+        xdotool type --clearmodifiers "	"
+        echo "$DATA" | jq -r .PASSWORD | xdotool type --clearmodifiers --file -
+        ;;
+    browse-url)
+        U=$(choose "$(load .URL)" "$1" | jq -r .URL)
+        [ ! -z "$U" ] && xdg-open "$U"
+        ;;
+    # add a browse url, wait, type
+    *)
+        echo "eh"
+        exit 1
+        ;;
+esac
