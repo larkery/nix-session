@@ -1,5 +1,3 @@
-scheme~ http://.*facebook.com
-exec notify-send avoided-link
 scheme http
 scheme https
 exec vimb
