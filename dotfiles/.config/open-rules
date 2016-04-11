@@ -1,0 +1,13 @@
+scheme~ http://.*facebook.com
+exec notify-send avoided-link
+scheme http
+scheme https
+exec vimb
+mime image/.+
+exec feh
+mime inode/directory
+mime text/.+
+exec emacsclient -c
+re .*
+exec xdg-open
+EOF

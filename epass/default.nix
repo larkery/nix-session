@@ -15,8 +15,8 @@ pkgs.stdenv.mkDerivation {
     --replace dmenu ${pkgs.dmenu}/bin/dmenu \
     --replace emacs ${pkgs.emacs}/bin/emacs \
     --replace xdotool ${pkgs.xdotool}/bin/xdotool \
-    --replace epass.el $out/share/emacs/site-lisp/epass.el
-  cp epass.el $out/share/emacs/site-lisp/
+    --replace epass-json.el $out/share/emacs/site-lisp/epass-json.el
+  cp epass-json.el $out/share/emacs/site-lisp/
   chmod +x $out/bin/*
   '';
 }

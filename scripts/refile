@@ -6,7 +6,7 @@ import notmuch, os, shutil, sys
 import uuid
 import re
 
-base_maildir = os.env('MAIL_DIR')
+base_maildir = os.environ['MAIL_DIR']
 
 def md(p):
     return os.path.relpath(os.path.dirname(os.path.dirname(p)), base_maildir)

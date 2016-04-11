@@ -10,8 +10,8 @@ xterm*foreground: FGCOL
 xterm*color0:  #000000
 xterm*color8:  #000000
 !red
-xterm*color1:  #7b3303
-xterm*color9:  #7b3303
+xterm*color1:  #7f3202
+xterm*color9:  #7f3202
 !green
 xterm*color2:  #426d0f
 xterm*color10: #426d0f

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 load() {
-    emacs -Q --batch --load epass.el --eval '(epass-file-princ-json "~/.passwords")' |
-        jq -c -r 'select('$1')'
+    emacs -Q --batch --load epass-json.el --eval '(epass-file-princ-json "~/.passwords")' 2>/dev/null |
+        jq -c -r 'select('"$1"')'
 }
 
 choose() {
@@ -15,25 +15,46 @@ choose() {
 }
 
 case $1 in
-    type-user)
-        choose "$(load .USERNAME)" "$1" | jq -r .USERNAME | xdotool type --clearmodifiers --file -
+    type)
+        case $2 in
+            user)
+                choose "$(load .USERNAME)" "$1 $2" | jq -r .USERNAME | xdotool type --clearmodifiers --file -
+                ;;
+            password)
+                choose "$(load .PASSWORD)" "$1 $2" | jq -r .PASSWORD | xdotool type --clearmodifiers --file -
+                ;;
+            *)
+                DATA=$(choose "$(load '.USERNAME and .PASSWORD')" "$1")
+                echo "$DATA" | jq -r .USERNAME | xdotool type --clearmodifiers --file -
+                xdotool type --clearmodifiers "	"
+                echo "$DATA" | jq -r .PASSWORD | xdotool type --clearmodifiers --file -
+                ;;
+        esac
         ;;
-    type-password)
-        choose "$(load .PASSWORD)" "$1" | jq -r .PASSWORD | xdotool type --clearmodifiers --file -
-        ;;
-    type-both)
-        DATA=$(choose "$(load '.USERNAME and .PASSWORD')" "$1")
-        echo "$DATA" | jq -r .USERNAME | xdotool type --clearmodifiers --file -
-        xdotool type --clearmodifiers "	"
-        echo "$DATA" | jq -r .PASSWORD | xdotool type --clearmodifiers --file -
-        ;;
-    browse-url)
+    visit)
         U=$(choose "$(load .URL)" "$1" | jq -r .URL)
         [ ! -z "$U" ] && xdg-open "$U"
         ;;
-    # add a browse url, wait, type
+    list)
+        load . | jq -r .name
+        ;;
+    echo)
+        shift
+        output=$1
+        shift
+        jqrule="true"
+        while (( "$#" )); do
+            if [ ! -z "$jqrule" ] ; then
+                jqrule="$jqrule and "
+            fi
+
+            jqrule="$jqrule.${1^^} == \"$2\""
+            shift
+            shift
+        done
+        load "$jqrule" | head -n 1 | jq -r ".${output^^}"
+        ;;
     *)
-        echo "eh"
-        exit 1
+        echo "list | type [user | password | both] | visit"
         ;;
 esac

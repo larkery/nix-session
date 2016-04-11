@@ -4,9 +4,12 @@
        patches = [ ../../patches/dmenu-number-output.patch ];
      };
      #emacs24 has a silly bug with xft fonts.
-     emacs = pkgs.lib.overrideDerivation pkgs.emacs (attrs : {
-       patches = pkgs.emacs.patches ++ [ ../../patches/emacs-xft.patch ];
-     });
+     emacs = pkgs.lib.overrideDerivation
+       (pkgs.emacs.override {
+         withGTK3 = false;
+         withGTK2 = false;
+         })
+       (attrs : { patches = pkgs.emacs.patches ++ [ ../../patches/emacs-xft.patch ]; }) ;
 
      workspace = pkgs.buildEnv {
        name = "workspace";

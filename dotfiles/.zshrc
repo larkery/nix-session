@@ -53,20 +53,24 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
 # prompt garble
 
-if [ ${IN_NIX_SHELL:-0} = 1 ]; then
-    PROMPT="%F{red}%~%f
-%(?,%F{black},%F{red})➤%f "
-else
-    PROMPT="%F{blue}%~%f
-%(?,%F{black},%F{red})➤%f "
+PROMPTSYM="➤"
+PROMPT="%F{blue}%~%f\${vcs_info_msg_0_}
+%(?,%F{black},%F{red})$PROMPTSYM%f "
 
-fi
+autoload -Uz vcs_info
+zstyle ':vcs_info:*' enable git svn hg
+zstyle ':vcs_info:*' check-for-changes true
+zstyle ':vcs_info:*' formats " %{$fg[green]%}%b%{$reset_color%} %{$fg[yellow]%}%c%{$fg[red]%}%u%{$reset_color%}"
 
-_gitinfo () {
-   vcprompt -f "%u%m%b"
+precmd() {
+  vcs_info
 }
 
-RPROMPT='$(_gitinfo)'
+if [ ${IN_NIX_SHELL:-0} = 1 ]; then
+    RPROMPT="%Unix-shell%u"
+fi
+
+autoload -Uz add-zsh-hook
 
 case $TERM in
     xterm*)
@@ -75,7 +79,7 @@ case $TERM in
             printf "\033];%s\07" "$1"
         }
 
-        precmd() {
+        _timer_precmd() {
             if ! [ -z "$_STARTED" ]; then
                 NOW=$(date +%s)
                 DELTA=$(($NOW - $_STARTED))
@@ -86,6 +90,9 @@ case $TERM in
             _STARTED=""
             print -Pn "\e]0;%~\a"
         }
+
+
+        add-zsh-hook precmd _timer_precmd
         ;;
 esac
 
@@ -93,6 +100,10 @@ esac
 bindkey -e
 bindkey ";3A" history-beginning-search-backward
 bindkey ";3B" history-beginning-search-forward
+
+autoload edit-command-line
+zle -N edit-command-line
+bindkey "^X^E" edit-command-line
 
 # command aliases
 alias ls='ls --color'
@@ -140,5 +151,22 @@ vbe-insert-bookmark() {
         emulate -L zsh
         LBUFFER=${LBUFFER}"~-"
     }
+
 zle -N vbe-insert-bookmark
 bindkey '^[#' vbe-insert-bookmark
+
+# directory memory
+autoload -Uz chpwd_recent_dirs cdr
+add-zsh-hook chpwd chpwd_recent_dirs
+
+zstyle ':chpwd:*' recent-dirs-default true
+
+rationalise-dot() {
+  if [[ $LBUFFER = *.. ]]; then
+    LBUFFER+=/..
+  else
+    LBUFFER+=.
+  fi
+}
+zle -N rationalise-dot
+bindkey . rationalise-dot
