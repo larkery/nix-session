@@ -172,3 +172,9 @@ rationalise-dot() {
 }
 zle -N rationalise-dot
 bindkey . rationalise-dot
+
+alias o=xdg-open
+alias -s org=xdg-open
+alias -s pdf=xdg-open
+alias -s jpg=xdg-open
+alias -s png=xdg-open

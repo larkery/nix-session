@@ -42,19 +42,19 @@ case $1 in
         shift
         output=$1
         shift
-        jqrule="true"
+        jrule="true"
         while (( "$#" )); do
-            if [ ! -z "$jqrule" ] ; then
-                jqrule="$jqrule and "
+            if [ ! -z "$jrule" ] ; then
+                jrule="$jrule and "
             fi
 
-            jqrule="$jqrule.${1^^} == \"$2\""
+            jrule="$jrule.${1^^} == \"$2\""
             shift
             shift
         done
-        load "$jqrule" | head -n 1 | jq -r ".${output^^}"
+        load "$jrule" | head -n 1 | jq -r ".${output^^}"
         ;;
     *)
-        echo "list | type [user | password | both] | visit"
+        echo "list | type [user | password | both] | visit | echo password [key value]*"
         ;;
 esac

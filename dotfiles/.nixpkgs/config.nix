@@ -11,6 +11,8 @@
          })
        (attrs : { patches = pkgs.emacs.patches ++ [ ../../patches/emacs-xft.patch ]; }) ;
 
+     epass = import ../../epass;
+
      workspace = pkgs.buildEnv {
        name = "workspace";
 
@@ -55,6 +57,7 @@
        xbrightness
        unzip
        jq
+       epass
        ];
 
        postBuild = ''
