@@ -15,9 +15,10 @@
   boot.loader.grub.version = 2;
   # Define on which hard drive you want to install Grub.
   boot.loader.grub.device = "/dev/sda";
+  boot.loader.timeout = 1;
 
+  networking.firewall.enable = false;
   networking.hostName = "keats"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Select internationalisation properties.
   i18n = {
@@ -63,7 +64,6 @@
   services.xserver.windowManager.i3.enable = true;
   services.xserver.displayManager.lightdm.enable = true;
 
-  # may make manpath work?
   environment.profileRelativeEnvVars = {
     MANPATH = [ "/man" "/share/man" ] ;
   };
@@ -76,6 +76,7 @@
     uid = 1000;
   };
 
-  # The NixOS release to be compatible with for stateful data such as databases.
+  fonts.fontconfig.hinting.style = "slight";
+    # The NixOS release to be compatible with for stateful data such as databases.
   system.stateVersion = "16.03";
 }
