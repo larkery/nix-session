@@ -1,0 +1,43 @@
+#!/usr/bin/env zsh
+RE_MATCH_PCRE=1
+
+if [ -e "$1" ]; then
+    mime="$(file --mime-type --brief $1)"
+    exists=1
+fi
+
+found=1
+
+while read mode match; do
+    if [ $found != 0 ]; then
+        case $mode in
+            test)
+                eval $match
+                found=$?
+                ;;
+            name)
+                [[ -n $exists && "$1" =~ "$match" ]]
+                found=$?
+            ;;
+            mime)
+                [[ -n $exists && "$mime" =~ "$match"  ]]
+                found=$?
+            ;;
+            scheme)
+                match="^$match:.*"
+                [[ -z $exists && "$1" =~ "$match" ]]
+                found=$?
+            ;;
+            url)
+                [[ -z $exists && "$1" =~ "$match" ]]
+                found=$?
+            ;;
+        esac
+    elif [ $mode = exec ]; then
+        command=${(e)match}
+        [ $? -ne 0 ] && exit
+        exec eval ${command}
+    fi
+done < $HOME/.config/open-rules
+
+echo "no match"

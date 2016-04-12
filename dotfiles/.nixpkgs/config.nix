@@ -53,6 +53,8 @@
        xss-lock
        xorg.xbacklight
        xbrightness
+       unzip
+       jq
        ];
 
        postBuild = ''

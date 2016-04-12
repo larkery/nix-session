@@ -174,14 +174,14 @@ SOCK 35;44
 DOOR 35;44 # Solaris 2.5 and later
 BLK  33;44
 CHR  37;44
-
+OTHER_WRITABLE     01;35
 
 #############################################################################
 ### By file attributes
 
 # Orphaned symlinks (blinking white on red)
 # Blink may or may not work (works on iTerm dark or light, and Putty dark)
-ORPHAN  05;37;41
+ORPHAN  01;04;31
 # ... and the files that orphaned symlinks point to (blinking white on red)
 MISSING 05;37;41
 

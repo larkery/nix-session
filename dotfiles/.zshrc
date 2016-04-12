@@ -53,21 +53,23 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
 # prompt garble
 
-PROMPTSYM="➤"
+PROMPTSYM="▶"
 PROMPT="%F{blue}%~%f\${vcs_info_msg_0_}
-%(?,%F{black},%F{red})$PROMPTSYM%f "
+%(?,%F{black},%F{196})$PROMPTSYM%f "
 
 autoload -Uz vcs_info
 zstyle ':vcs_info:*' enable git svn hg
 zstyle ':vcs_info:*' check-for-changes true
-zstyle ':vcs_info:*' formats " %{$fg[green]%}%b%{$reset_color%} %{$fg[yellow]%}%c%{$fg[red]%}%u%{$reset_color%}"
+zstyle ':vcs_info:*' formats " %{$fg[green]%}%b%{$reset_color%} %c%u"
+zstyle ':vcs_info:git*:*' unstagedstr "%{$fg[red]%}∆%{$reset_color%}"
+zstyle ':vcs_info:git*:*' stagedstr "%{$fg[yellow]%}∇%{$reset_color%}"
 
 precmd() {
   vcs_info
 }
 
 if [ ${IN_NIX_SHELL:-0} = 1 ]; then
-    RPROMPT="%Unix-shell%u"
+    RPROMPT="%F{202}◆%f"
 fi
 
 autoload -Uz add-zsh-hook

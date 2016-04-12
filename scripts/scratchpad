@@ -1,32 +1,65 @@
-#!/usr/bin/env nix-shell
-#!nix-shell -i bash -p jq
+#!/usr/bin/env bash
 
-case "$BLOCK_BUTTON" in
-    1)
-        i3-msg 'scratchpad show' > /dev/null
-        ;;
-    3)
-        i3-msg '[urgent="latest"] scratchpad show' > /dev/null
-        ;;
-    4)
-        i3-msg 'scratchpad show; scratchpad show;' > /dev/null
-        ;;
-    5)
-        i3-msg 'scratchpad show; scratchpad show;' > /dev/null
-        ;;
+sp_count() {
+    i3-msg -t get_tree | jq -r '[recurse(.nodes[])|select(.name == "__i3_scratch")|recurse(.floating_nodes[])|recurse(.nodes[])|select(.window_properties)|select(.window_properties.class != "i3bar")]|length'
+}
+
+sp_active() {
+    test ! $(i3-msg -t get_tree|jq '[recurse(.nodes[]) | recurse(.floating_nodes[])|select(.scratchpad_state !="none")|.nodes[]|select(.focused)]|length') = 0
+}
+
+update_bar() {
+    pkill -RTMIN+1 i3blocks
+}
+
+case $1 in
+    push)
+        COUNT=$(sp_count)
+        CMD="move scratchpad"
+        rotate="scratchpad show, scratchpad show"
+        for i in $(seq $COUNT)
+        do
+            CMD="$CMD, $rotate"
+        done
+        i3-msg "$CMD"
+        update_bar
+    ;;
+    pop)
+        if sp_active
+        then
+            i3-msg scratchpad show, scratchpad show
+        else
+            i3-msg scratchpad show
+        fi
+        update_bar
+    ;;
     *)
-esac
+        case "$BLOCK_BUTTON" in
+            1)
+                i3-msg 'scratchpad show' > /dev/null
+                ;;
+            3)
+                i3-msg '[urgent="latest"] scratchpad show' > /dev/null
+                ;;
+            4)
+                i3-msg 'scratchpad show; scratchpad show;' > /dev/null
+                ;;
+            5)
+                i3-msg 'scratchpad show; scratchpad show;' > /dev/null
+                ;;
+            *)
+        esac
 
-URGENT=$(i3-msg -t get_tree \
-                | jq -r 'recurse(.nodes[])
+        URGENT=$(i3-msg -t get_tree \
+                        | jq -r 'recurse(.nodes[])
   | select(.name == "__i3_scratch")
   | .floating_nodes | map(recurse(.nodes[]))
   | map(select(.type == "con" and .urgent))
   | (if (.|length) == 0 then "" else (.[0] | .window_properties | .class + ": " + .title) end)')
 
-if [ -z "${URGENT}" ]; then
-    i3-msg -t get_tree \
-        | jq -r 'recurse(.nodes[])
+        if [ -z "${URGENT}" ]; then
+            i3-msg -t get_tree \
+                | jq -r 'recurse(.nodes[])
   | select(.name == "__i3_scratch")
   | .floating_nodes | map(recurse(.nodes[]))
   | map(select(.type == "con"))
@@ -34,8 +67,11 @@ if [ -z "${URGENT}" ]; then
      (.[0] | .window_properties | .class + ": " + .title) + (length -1 | if . <= 0 then "" else (.|tostring|" + " + .) end)
      else "-"
      end)'
-else
-    echo "${URGENT}"
-    echo
-    echo "#FF0000"
-fi
+        else
+            echo "${URGENT}"
+            echo
+            echo "#FF0000"
+        fi
+
+        ;;
+esac

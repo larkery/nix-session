@@ -1,11 +1,17 @@
+mime application/pdf
+exec mupdf-x11 "$1"
+scheme mailto
+exec emacsclient -c -e "(browse-url-mail \\"$1\\")"
 scheme http
 scheme https
-exec vimb
+exec vimb "$1"
 mime image/.+
-exec feh
+exec feh "$1"
+test [ -d $1/.git ]
+exec emacsclient -c -e "(magit-status \\"$1\\")"
 mime inode/directory
 mime text/.+
-exec emacsclient -c
-re .*
-exec xdg-open
+exec emacsclient -c "$1"
+name .*
+exec $(dmenu_path|dmenu -p "open $(basename $1) ($mime) with: ") "$1"
 EOF

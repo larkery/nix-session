@@ -72,8 +72,8 @@ bindsym $mod+bracketleft  workspace prev_on_output
 bindsym $mod+bracketright workspace next_on_output
 
 # TODO: scripts and bar.
-bindsym $mod+minus move scratchpad, exec --no-startup-id pkill -RTMIN+1 i3blocks
-bindsym $mod+equal scratchpad show, exec --no-startup-id pkill -RTMIN+1 i3blocks
+bindsym $mod+m exec --no-startup-id ~/session/scripts/scratchpad push
+bindsym $mod+Shift+m exec --no-startup-id ~/session/scripts/scratchpad pop
 
 bindsym $mod+b bar mode toggle
 
