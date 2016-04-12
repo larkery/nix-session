@@ -10,6 +10,7 @@ exec --no-startup-id dunst
 exec --no-startup-id xss-lock lock
 exec --no-startup-id ~/session/scripts/displays
 exec --no-startup-id xsetroot -solid gray10 -cursor_name left_ptr
+exec --no-startup-id xcape -e 'Control_L=Menu'
 
 set $mod Mod4
 font pango:Sans 8
