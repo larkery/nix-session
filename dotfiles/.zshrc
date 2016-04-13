@@ -178,3 +178,10 @@ alias -s org=xdg-open
 alias -s pdf=xdg-open
 alias -s jpg=xdg-open
 alias -s png=xdg-open
+
+history-incremental-pattern-search-backward-with-buffer() {
+  zle history-incremental-pattern-search-backward $BUFFER
+}
+zle -N history-incremental-pattern-search-backward-with-buffer
+bindkey '^R' history-incremental-pattern-search-backward-with-buffer
+bindkey -M isearch '^R' history-incremental-search-backward
