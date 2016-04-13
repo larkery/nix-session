@@ -1,5 +1,3 @@
-[[ -z $SOURCED_PROFILE ]] && source $HOME/.profile
-
 # include path
 ZSH=~/.zsh
 fpath=( $SESSION_DIR/zsh/functions "${fpath[@]}" )

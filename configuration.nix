@@ -39,7 +39,15 @@
   # List services that you want to enable:
 
   programs.ssh.startAgent = false;
-  programs.zsh.enable = true;
+  programs.zsh = {
+    enable = true;
+    shellInit = "";
+    shellAliases = {};
+    promptInit = "";
+    loginShellInit = "";
+    interactiveShellInit = "";
+    enableCompletion = false;
+  };
 
   hardware.pulseaudio.enable = true;
 
