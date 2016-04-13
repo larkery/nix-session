@@ -58,6 +58,7 @@
        unzip
        jq
        epass
+       xcape
        ];
 
        postBuild = ''
