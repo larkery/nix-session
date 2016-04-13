@@ -41,7 +41,7 @@
 # COLOR needs one of these arguments: 'tty' colorizes output to ttys, but not
 # pipes. 'all' adds color characters to all output. 'none' shuts colorization
 # off.
-COLOR tty
+COLOR all
 
 # Below, there should be one TERM entry for each termtype that is colorizable
 TERM ansi
