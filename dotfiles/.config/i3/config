@@ -116,7 +116,7 @@ mode $i3_mode {
      bindsym l reload, mode default
      bindsym r restart, mode default
      bindsym e exit, mode default
-     bindsym h exec --no-startup-id systemctl hibernate
+     bindsym h exec --no-startup-id systemctl hibernate, mode default
      bindsym s exec --no-startup-id systemctl poweroff
      bindsym Escape mode default
 }
