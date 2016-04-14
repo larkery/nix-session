@@ -256,6 +256,13 @@ _accept_or_ls () {
 
 zle -N _accept_or_ls
 
+_dired() {
+    xdg-open . &|
+}
+
+zle -N _dired
+
 bindkey "^M" _accept_or_ls
+bindkey "^X^J" _dired
 
 eval $(dircolors -b $HOME/session/dircolors.ansi-light)
