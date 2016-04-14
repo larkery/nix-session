@@ -6,8 +6,6 @@ export EDITOR="emacsclient"
 export GPG_AGENT_INFO=$HOME/.gnupg/S.gpg-agent
 export SSH_AUTH_SOCK=$HOME/.gnupg/S.gpg-agent.ssh
 
-eval $(dircolors -b $HOME/session/dircolors.ansi-light)
-
 gpg-connect-agent /bye
 
 export SSH_AUTH_SOCK="${HOME}/.gnupg/S.gpg-agent.ssh"

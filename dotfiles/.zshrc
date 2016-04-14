@@ -1,3 +1,7 @@
+# nixos terminal login does not do this
+# for reasons which escape me.
+[[ -z $SOURCED_PROFILE ]] && source $HOME/.profile
+
 # include path
 ZSH=~/.zsh
 fpath=( $SESSION_DIR/zsh/functions "${fpath[@]}" )
@@ -55,7 +59,7 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
 PROMPTSYM="▶"
 PROMPT="%F{blue}%~%f\${vcs_info_msg_0_}
-%(?,%F{black},%F{196})$PROMPTSYM%f "
+%(?,%F{black},%F{124})$PROMPTSYM%f "
 
 autoload -Uz vcs_info
 zstyle ':vcs_info:*' enable git svn hg
@@ -65,7 +69,11 @@ zstyle ':vcs_info:git*:*' unstagedstr "%{$fg[red]%}∆%{$reset_color%}"
 zstyle ':vcs_info:git*:*' stagedstr "%{$fg[yellow]%}∇%{$reset_color%}"
 
 precmd() {
-  vcs_info
+    vcs_info
+}
+
+preexec() {
+
 }
 
 if [ ${IN_NIX_SHELL:-0} = 1 ]; then
@@ -76,9 +84,10 @@ autoload -Uz add-zsh-hook
 
 case $TERM in
     xterm*)
-        preexec() {
+        _title_preexec() {
             _STARTED=$(date +%s)
             printf "\033];%s\07" "$1"
+
         }
 
         _timer_precmd() {
@@ -93,24 +102,28 @@ case $TERM in
             print -Pn "\e]0;%~\a"
         }
 
-
+        add-zsh-hook preexec _title_preexec
         add-zsh-hook precmd _timer_precmd
         ;;
 esac
-
-# key bindings
-bindkey -e
-bindkey ";3A" history-beginning-search-backward
-bindkey ";3B" history-beginning-search-forward
 
 autoload edit-command-line
 zle -N edit-command-line
 bindkey "^X^E" edit-command-line
 
 # command aliases
-alias ls='ls --color'
+alias ls='ls -h --color'
 alias l='ls -l'
 alias la='l -a'
+
+o() {
+    xdg-open "$@" &|
+}
+
+alias -s org=o
+alias -s pdf=o
+alias -s jpg=o
+alias -s png=o
 
 # bookmarks
 MARKPATH=$ZSH/run/marks
@@ -173,15 +186,76 @@ rationalise-dot() {
 zle -N rationalise-dot
 bindkey . rationalise-dot
 
-alias o=xdg-open
-alias -s org=xdg-open
-alias -s pdf=xdg-open
-alias -s jpg=xdg-open
-alias -s png=xdg-open
 
-history-incremental-pattern-search-backward-with-buffer() {
-  zle history-incremental-pattern-search-backward $BUFFER
+# similar to history substring search but smaller, not quite as good
+# (doesn't work twice in a row unless you run something)
+
+_history-incremental-pattern-search-backward-with-buffer() {
+    zle history-incremental-pattern-search-backward $BUFFER
 }
-zle -N history-incremental-pattern-search-backward-with-buffer
-bindkey '^R' history-incremental-pattern-search-backward-with-buffer
+
+zle -N _history-incremental-pattern-search-backward-with-buffer
+bindkey '^R' _history-incremental-pattern-search-backward-with-buffer
 bindkey -M isearch '^R' history-incremental-search-backward
+
+_up-arrow() {
+    if [[ -z $BUFFER ]] || [[ $HISTNO != $HISTCMD ]]; then
+        zle up-line-or-history
+    else
+        zle history-incremental-pattern-search-backward $BUFFER
+    fi
+}
+
+zle -N _up-arrow
+
+bindkey "\eOA" _up-arrow
+bindkey -M isearch "\eOA" history-incremental-search-backward
+bindkey -M isearch "\eOB" history-incremental-search-forward
+
+DIRSTACKSIZE=8
+setopt autopushd pushdminus pushdsilent pushdtohome
+
+_go-back() {
+    pushd -1
+    precmd
+    zle reset-prompt
+}
+
+_go-fwd() {
+    pushd +0
+    precmd
+    zle reset-prompt
+}
+
+zle -N _go-back
+zle -N _go-fwd
+bindkey '^[[1;3A' _go-back
+bindkey '^[[1;3B' _go-fwd
+
+mnt() {
+    [ ! -d /run/media/hinton/"$1" ] && \
+        udisksctl mount --block-device /dev/disk/by-label/"$1"
+    cd /run/media/hinton/"$1"
+}
+
+compdef '_files -W /dev/disk/by-label' mnt
+
+# either run a command or run ls if nothing there
+
+_accept_or_ls () {
+    if [[ -z $BUFFER ]]
+    then
+        echo
+        l
+        precmd
+        zle reset-prompt
+    else
+        zle accept-line
+    fi
+}
+
+zle -N _accept_or_ls
+
+bindkey "^M" _accept_or_ls
+
+eval $(dircolors -b $HOME/session/dircolors.ansi-light)

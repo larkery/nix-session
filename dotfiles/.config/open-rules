@@ -1,3 +1,7 @@
+url file:///[\\/]+CSE-BS3-FILE[\\/]
+exec xdg-open ${${1//CSE-BS3-FILE?/\/home/hinton/network/CSE/CSE-BS3-FILE/}//\\//}
+scheme file
+exec xdg-open $(printf '%b' "${${${1//file://}//+/ }//\%/\\x}")
 mime application/pdf
 exec mupdf-x11 "$1"
 scheme mailto
@@ -7,7 +11,7 @@ scheme https
 exec vimb "$1"
 mime image/.+
 exec feh "$1"
-test [ -d $1/.git ]
+test [ -d "$1/.git" ]
 exec emacsclient -c -e "(magit-status \\"$1\\")"
 mime inode/directory
 mime text/.+

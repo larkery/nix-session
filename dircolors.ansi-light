@@ -164,7 +164,7 @@ NORMAL 00
 # normal file
 FILE 00
 # directory
-DIR 36
+DIR 36;01
 # symbolic link
 LINK 35
 
@@ -204,10 +204,10 @@ EXEC 01;31  # Unix
 ### Text formats
 
 # Text that we can edit with a regular editor
-.txt 32
-.org 32
-.md 32
-.mkd 32
+.txt 30
+.org 30
+.md 30
+.mkd 30
 
 # Source text
 .h 32
