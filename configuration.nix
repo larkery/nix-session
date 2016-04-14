@@ -11,11 +11,11 @@
     ];
 
   # Use the GRUB 2 boot loader.
+  boot.loader.grub.timeout = 1;
   boot.loader.grub.enable = true;
   boot.loader.grub.version = 2;
   # Define on which hard drive you want to install Grub.
   boot.loader.grub.device = "/dev/sda";
-  boot.loader.timeout = 1;
 
   networking = {
      firewall.enable = false;
@@ -65,10 +65,16 @@
     xserver = {
        enable = true;
        layout = "gb";
-       synaptics.enable = true;
+
        xkbOptions = "ctrl:nocaps";
        windowManager.i3.enable = true;
        displayManager.lightdm.enable = true;
+
+       synaptics = {
+         enable = true;
+         vertEdgeScroll = false;
+         twoFingerScroll = true;
+       };
     };
   };
 
@@ -89,4 +95,4 @@
   fonts.fontconfig.hinting.style = "slight";
     # The NixOS release to be compatible with for stateful data such as databases.
   system.stateVersion = "16.03";
-}
+  }
