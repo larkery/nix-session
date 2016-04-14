@@ -11,14 +11,18 @@
     ];
 
   # Use the GRUB 2 boot loader.
-  boot.loader.grub.timeout = 1;
   boot.loader.grub.enable = true;
   boot.loader.grub.version = 2;
   # Define on which hard drive you want to install Grub.
   boot.loader.grub.device = "/dev/sda";
+  boot.loader.timeout = 1;
 
-  networking.hostName = "hesse"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  networking = {
+     firewall.enable = false;
+     hostName = "keats"; # Define your hostname.
+     networkmanager.enable = true;
+     networkmanager.packages = with pkgs; [networkmanager_pptp];
+  };
 
   # Select internationalisation properties.
   i18n = {
@@ -39,6 +43,10 @@
   # List services that you want to enable:
 
   programs.ssh.startAgent = false;
+  hardware.pulseaudio.enable = true;
+
+  # zsh has an annoying default config which I don't want
+  # so to make it work well I have to turn it off first.
   programs.zsh = {
     enable = true;
     shellInit = "";
@@ -49,33 +57,23 @@
     enableCompletion = false;
   };
 
-  hardware.pulseaudio.enable = true;
-
-  services.acpid.enable = true;
-  powerManagement.enable = true;
-  services.tlp.enable = true;
-
-# these do not appear to work :/
-  services.udisks2.enable = true;
-
-  networking.networkmanager.enable = true;
-  networking.networkmanager.packages = with pkgs; [networkmanager_pptp];
-
-  # Enable the X11 windowing system.
-  services.xserver.enable = true;
-  services.xserver.layout = "gb";
-
-  services.xserver.synaptics = {
-    enable = true;
-    vertEdgeScroll = false;
-    twoFingerScroll = true;
+  services = {
+    nscd.enable = false;
+    acpid.enable = true;
+    tlp.enable = true;
+    udisks2.enable = true;
+    xserver = {
+       enable = true;
+       layout = "gb";
+       synaptics.enable = true;
+       xkbOptions = "ctrl:nocaps";
+       windowManager.i3.enable = true;
+       displayManager.lightdm.enable = true;
+    };
   };
 
-  services.xserver.xkbOptions = "ctrl:nocaps";
-  services.xserver.windowManager.i3.enable = true;
-  services.xserver.displayManager.lightdm.enable = true;
+  powerManagement.enable = true;
 
-  # may make manpath work?
   environment.profileRelativeEnvVars = {
     MANPATH = [ "/man" "/share/man" ] ;
   };
@@ -89,7 +87,6 @@
   };
 
   fonts.fontconfig.hinting.style = "slight";
-
-  # The NixOS release to be compatible with for stateful data such as databases.
+    # The NixOS release to be compatible with for stateful data such as databases.
   system.stateVersion = "16.03";
 }

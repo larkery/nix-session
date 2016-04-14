@@ -41,7 +41,7 @@
        openjdk
        openssl
        pa_applet
-       pinentry
+       pinentry_qt4
        silver-searcher
        smbnetfs
        strace

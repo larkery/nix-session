@@ -1,6 +1,8 @@
+(message "load deps..")
 (require 'org-element)
 (require 'json)
 
+(message "define fns...")
 (defvar epass-element-prefix "")
 (defvar epass-interesting-properties '(:PASSWORD :URL :USERNAME :MACHINE :PORT))
 
@@ -35,7 +37,6 @@
     nil nil 'headline
     ))
 
-
 (defun epass-file-princ-json (file)
   (when (file-exists-p file)
     (if (file-directory-p file)
@@ -45,3 +46,4 @@
         (let ((epass-element-prefix file))
           (epass-element-princ-json (org-element-parse-buffer 'headline))))
       )))
+(message "ready.")
