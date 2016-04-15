@@ -28,8 +28,8 @@ xterm*color13: #a6a007
 xterm*color6:  #008d9a
 xterm*color14: #008d9a
 !white
-xterm*color7:  #8a8a8a
-xterm*color15: #8a8a8a
+xterm*color7:  #ffffff
+xterm*color15: #ffffff
 
 xterm*termName: xterm-256color
 xterm*faceName: FONT
