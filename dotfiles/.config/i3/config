@@ -76,7 +76,6 @@ bindsym $mod+shift+l focus mode_toggle
 bindsym $mod+bracketleft  workspace prev_on_output
 bindsym $mod+bracketright workspace next_on_output
 
-# TODO: scripts and bar.
 bindsym $mod+m exec --no-startup-id ~/session/scripts/scratchpad push
 bindsym $mod+Shift+m exec --no-startup-id ~/session/scripts/scratchpad pop
 
@@ -93,6 +92,8 @@ bindsym $mod+7 workspace number 7
 bindsym $mod+8 workspace number 8
 bindsym $mod+9 workspace number 9
 bindsym $mod+0 workspace number 10
+bindsym $mod+minus exec --no-startup-id "i3-msg workspace number $(i3-msg -t get_workspaces | jq '[(map(.num)|sort) as $in | [range(1;length+2)] | .[] | select($in[.-1] != .)] | .[0]')"
+bindsym $mod+equal workspace back_and_forth
 
 # move focused container to workspace
 bindsym $mod+Shift+1 move container to workspace number 1
