@@ -5,14 +5,14 @@ exec xdg-open $(printf '%b' "${${${1//file://}//+/ }//\%/\\x}")
 mime application/pdf
 exec mupdf-x11 "$1"
 scheme mailto
-exec emacsclient -c -e "(browse-url-mail \\"$1\\")"
+exec emacsclient -c -e "(browse-url-mail \"$1\")"
 scheme http
 scheme https
 exec vimb "$1"
 mime image/.+
 exec feh "$1"
 test [ -d "$1/.git" ]
-exec emacsclient -c -e "(magit-status \\"$1\\")"
+exec emacsclient -c -e "(magit-status \"$1\")"
 mime inode/directory
 mime text/.+
 exec emacsclient -c "$1"

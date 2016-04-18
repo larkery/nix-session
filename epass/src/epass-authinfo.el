@@ -33,12 +33,10 @@
                                         (por (org-element-property :PORT element)))
                                     (when (and (string= machine m)
                                                (or (not ports)
-                                                   (memq p ports)))
-
+                                                   (member por ports)))
                                       (list por u p))))))
                 ;; if the port is better than the port we have already
                 ;; then update what we have.
-
                 (let ((port-index (position (car answer) ports)))
                   (setq result
                         (or
@@ -50,7 +48,6 @@
                         result-port
                         (min (or result-port 1000) (or port-index 1000)))))
               )))))
-    (message "%s" result)
     result
     ))
 

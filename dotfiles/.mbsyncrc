@@ -3,7 +3,7 @@
 IMAPAccount cse
    Host webmail.cse.org.uk
    User tomh@cse.org.uk
-   SSLType IMAPS
+   SSLType STARTTLS
    SystemCertificates yes
    AuthMechs LOGIN
    PassCmd "epass echo password machine webmail.cse.org.uk"
