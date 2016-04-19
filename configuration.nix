@@ -11,15 +11,16 @@
     ];
 
   # Use the GRUB 2 boot loader.
-  boot.loader.grub.timeout = 1;
   boot.loader.grub.enable = true;
   boot.loader.grub.version = 2;
   # Define on which hard drive you want to install Grub.
   boot.loader.grub.device = "/dev/sda";
+  boot.loader.timeout = 1;
 
   networking = {
      firewall.enable = false;
      hostName = "keats"; # Define your hostname.
+     domain = "cse.org.uk";
      networkmanager.enable = true;
      networkmanager.packages = with pkgs; [networkmanager_pptp];
   };
@@ -38,6 +39,7 @@
   # $ nix-env -qaP | grep wget
   environment.systemPackages = with pkgs; [
      zsh
+     cifs_utils
   ];
 
   # List services that you want to enable:
@@ -65,16 +67,30 @@
     xserver = {
        enable = true;
        layout = "gb";
-
-       xkbOptions = "ctrl:nocaps";
-       windowManager.i3.enable = true;
-       displayManager.lightdm.enable = true;
-
        synaptics = {
          enable = true;
          vertEdgeScroll = false;
          twoFingerScroll = true;
        };
+       xkbOptions = "ctrl:nocaps";
+       windowManager.i3.enable = true;
+       displayManager.lightdm.enable = true;
+    };
+
+    autofs = {
+      enable = true;
+      timeout = 300;
+      autoMaster =
+      let
+      subconf = pkgs.writeText "auto" ''
+         *   -fstype=cifs,credentials=$HOME/.smb/$host.cred,uid=$UID       ://$host/&
+      '';
+      mapConf = pkgs.writeText "auto" ''
+         *   -fstype=autofs,-Dhost=& file:${subconf}
+        '';
+        in ''
+        /net file:${mapConf}
+        '';
     };
   };
 
@@ -95,4 +111,4 @@
   fonts.fontconfig.hinting.style = "slight";
     # The NixOS release to be compatible with for stateful data such as databases.
   system.stateVersion = "16.03";
-  }
+}
