@@ -9,13 +9,6 @@ fi
 
 RE_MATCH_PCRE=1
 
-if [[ "$1" =~ "^/+home/+hinton/+network/.*" ]]; then
-    # cause smbnetfs to connect if needed
-    if ! pgrep smbnetfs; then
-        smbnetfs ~/network
-    fi
-fi
-
 if [ -e "$1" ]; then
     mime="$(file --mime-type --brief $1)"
     exists=1

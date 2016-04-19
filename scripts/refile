@@ -207,7 +207,7 @@ def fix_uids(maildir):
 
 def channel_name(maildir):
     parts = maildir.split('/')
-    return parts[0] + ':' + '/'.join(parts[1:])
+    return parts[0] + ':' + '/'.join(parts[1:]).replace(' ', '\\ ')
 
 if __name__ == "__main__":
     if '-f' in sys.argv:

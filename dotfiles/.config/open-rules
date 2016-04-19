@@ -1,5 +1,5 @@
 url file:///[\\/]+CSE-BS3-FILE[\\/]
-exec xdg-open ${${1//CSE-BS3-FILE?/\/home/hinton/network/CSE/CSE-BS3-FILE/}//\\//}
+exec xdg-open ${${1//CSE-BS3-FILE?/\/net/cse-bs3-file/}//\\//}
 scheme file
 exec xdg-open $(printf '%b' "${${${1//file://}//+/ }//\%/\\x}")
 mime application/pdf
@@ -8,6 +8,7 @@ scheme mailto
 exec emacsclient -c -e "(browse-url-mail \"$1\")"
 scheme http
 scheme https
+mime text/html
 exec vimb "$1"
 mime image/.+
 exec feh "$1"

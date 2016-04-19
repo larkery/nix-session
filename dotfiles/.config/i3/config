@@ -53,6 +53,9 @@ bindsym $mod+Mod1+Right focus right; split v; focus left;  move right
 bindsym $mod+Mod1+Up    focus up;    split h; focus down;  move up
 bindsym $mod+Mod1+Down  focus down;  split h; focus up;    move down
 
+bindsym $mod+a focus parent;
+bindsym $mod+s focus child;
+
 # split in horizontal orientation
 bindsym $mod+semicolon split h
 

@@ -1,9 +1,9 @@
 #!/bin/sh
 
-divert(){
-    "$@" >&3 2>&3 ||
-    eval "cat <&3
-          return $?"
-}   3<<"" 3<>/dev/fd/3
-
-divert msmtpq "$@"
+tmpfile=$(mktemp)
+msmtpq "$@" >  "$tmpfile"
+x=$?
+if [ $x != 0 ]; then
+    cat "$tmpfile"
+fi
+rm -f -- "$tmpfile"

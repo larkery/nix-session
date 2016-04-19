@@ -37,7 +37,8 @@ zstyle ':completion:*:functions' ignored-patterns '_*'
 # not sure about this
 zstyle ':completion:*:default' list-colors \
        ${(s.:.)LS_COLORS}
-zstyle ':completion:*' recursive-files '*'
+# this is bad.
+#zstyle ':completion:*' recursive-files '*/.git/*'
 zstyle ':completion:*' separate-sections yes
 
 zstyle :compinstall filename '/home/hinton/.zshrc'
