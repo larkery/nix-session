@@ -248,6 +248,7 @@ _accept_or_ls () {
     then
         echo
         l
+        echo
         precmd
         zle reset-prompt
     else

@@ -51,15 +51,17 @@
     result
     ))
 
-
 (defun epass-netrc-credentials (orig machine &rest ports)
   "Amend the result of ORIG for MACHINE and PORTS."
   (or
    (epass-load-netrc-credentials machine ports)
    (apply orig (cons machine ports))))
 
-
 (advice-add 'netrc-credentials :around #'epass-netrc-credentials)
+
+;; we also want to patch auth-source-search
+
+;; https://github.com/DamienCassou/auth-password-store/blob/master/auth-password-store.el
 
 (provide 'epass-authinfo)
 

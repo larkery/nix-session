@@ -1,6 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
-CHANGED=$("$HOME/session/scripts/refile" | grep -v 'fastmail:Inbox\|cse:Inbox\|cse:JIRA' | tr '\n' ' ')
+CHANGED=("${(@f)$($SESSION_DIR/scripts/refile)}")
+CHANGED+=(fastmail-inbox)
+CHANGED+=(cse:Inbox)
+CHANGED+=(cse:JIRA)
+
+typeset -U CHANGED
 
 if [ ! "$?" -eq 0 ]
 then
@@ -15,8 +20,8 @@ then
     E=$(mbsync -q -a 2>&1)
     touch "$WATCH"
 else
-    echo sync fastmail-inbox cse:Inbox cse:JIRA $CHANGED
-    E=$(mbsync -q fastmail-inbox cse:Inbox cse:JIRA $CHANGED 2>&1)
+    echo sync $CHANGED
+    E=$(mbsync -q $CHANGED 2>&1)
 fi
 
 if [ ! "$?" -eq 0 ]
