@@ -10,12 +10,16 @@ pkgs.stdenv.mkDerivation {
   installPhase = ''
   mkdir -p $out/bin
   mkdir -p $out/share/emacs/site-lisp/
+
   substitute epass $out/bin/epass \
     --replace jq ${pkgs.jq}/bin/jq \
     --replace dmenu ${pkgs.dmenu}/bin/dmenu \
     --replace emacs ${pkgs.emacs}/bin/emacs \
     --replace xdotool ${pkgs.xdotool}/bin/xdotool \
-    --replace epass-json.el $out/share/emacs/site-lisp/epass-json.el
+    --replace basedir "$out" \
+    --replace head ${pkgs.coreutils}/bin/head \
+    --replace socat ${pkgs.socat}/bin/socat
+
   cp epass-json.el $out/share/emacs/site-lisp/
   cp epass-authinfo.el $out/share/emacs/site-lisp/
   chmod +x $out/bin/*

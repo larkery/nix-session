@@ -1,14 +1,25 @@
 #!/usr/bin/env bash
 
+BASEDIR=basedir
+BASH=bash
+EMACS=emacs
+JQ=jq
+DMENU=dmenu
+SOCAT=socat
+EPASS=$BASEDIR/bin/epass
+XDOTOOL=xdotool
+HEAD=head
+SED=sed
+
 load() {
-    emacs -Q --batch --load epass-json.el --eval '(epass-file-princ-json "~/.passwords")' 2>/dev/null |
-        jq -c -r 'select('"$1"')'
+    $EMACS -Q --batch --load $BASEDIR/share/em'acs'/site-lisp/epass-json.el --eval '(epass-file-princ-json "~/.passwords")'  2>/dev/null |
+        $JQ -c -r 'select('"$1"')'
 }
 
 choose() {
-    LINE=$(echo -E "$1" | jq -r -c .name | dmenu -i -1 -p "${2:-select}: " -l 10)
+    LINE=$(echo -E "$1" | $JQ -r -c .name | $DMENU -i -1 -p "${2:-select}: " -l 10)
     if [ ! -z "$LINE" ]; then
-        echo -E "$1" | sed "${LINE}q;d"
+        echo -E "$1" | $SED "${LINE}q;d"
     else
         return 1
     fi
@@ -18,25 +29,25 @@ case $1 in
     type)
         case $2 in
             user)
-                choose "$(load .USERNAME)" "$1 $2" | jq -r .USERNAME | xdotool type --clearmodifiers --file -
+                choose "$(load .USERNAME)" "$1 $2" | $JQ -r .USERNAME | $XDOTOOL type --clearmodifiers --file -
                 ;;
             password)
-                choose "$(load .PASSWORD)" "$1 $2" | jq -r .PASSWORD | xdotool type --clearmodifiers --file -
+                choose "$(load .PASSWORD)" "$1 $2" | $JQ -r .PASSWORD | $XDOTOOL type --clearmodifiers --file -
                 ;;
             *)
                 DATA=$(choose "$(load '.USERNAME and .PASSWORD')" "$1")
-                echo "$DATA" | jq -r .USERNAME | xdotool type --clearmodifiers --file -
-                xdotool type --clearmodifiers "	"
-                echo "$DATA" | jq -r .PASSWORD | xdotool type --clearmodifiers --file -
+                echo "$DATA" | $JQ -r .USERNAME | $XDOTOOL type --clearmodifiers --file -
+                $XDOTOOL type --clearmodifiers "	"
+                echo "$DATA" | $JQ -r .PASSWORD | $XDOTOOL type --clearmodifiers --file -
                 ;;
         esac
         ;;
     visit)
-        U=$(choose "$(load .URL)" "$1" | jq -r .URL)
+        U=$(choose "$(load .URL)" "$1" | $JQ -r .URL)
         [ ! -z "$U" ] && xdg-open "$U"
         ;;
     list)
-        load . | jq -r .name
+        load . | $JQ -r .name
         ;;
     echo)
         shift
@@ -52,7 +63,41 @@ case $1 in
             shift
             shift
         done
-        load "$jrule" | head -n 1 | jq -r ".${output^^}"
+        load "$jrule" | $HEAD -n 1 | $JQ -r ".${output^^}"
+        ;;
+    serve-credentials)
+        PIDF=$HOME/.passwords/run/pid
+        case $2 in
+            start)
+                SOCKET="$HOME/.passwords/run/socket"
+
+                if [ ! -S "$SOCKET" ]; then
+                    $SOCAT UNIX-LISTEN:"$SOCKET",fork,reuseaddr EXEC:"$EPASS _serve-credentials" &
+                    PID=$!
+                    echo "$PID" > "$PIDF"
+                    wait $PID
+                fi
+                ;;
+            stop)
+                if [ -f "$PIDF" ]; then
+                    kill -- "$(cat $PIDF)"
+                    rm -rf -- "$PIDF"
+                fi
+                ;;
+        esac
+        ;;
+    _serve-credentials)
+        while read command server share; do
+            case $command in
+                write-credentials)
+                    echo "served $server $share" 1>&2
+                    cf="$HOME/.passwords/run/$server-$share.credentials"
+                    load ".MACHINE == \"$server\" and .SHARE == \"$share\"" \
+                        | $HEAD -n 1  \
+                        | $JQ -r '"username=" + .USERNAME + "\npassword=" + .PASSWORD + "\ndomain=" + .DOMAIN + "\n"' > "$cf"
+                    ;;
+            esac
+        done
         ;;
     *)
         echo "list | type [user | password | both] | visit | echo password [key value]*"

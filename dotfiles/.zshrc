@@ -8,7 +8,7 @@ fpath=( $SESSION_DIR/zsh/functions "${fpath[@]}" )
 autoload -Uz $SESSION_DIR/zsh/functions/*(:t)
 
 # options
-setopt autocd beep extendedglob nomatch prompt_subst menu_complete
+setopt autocd beep extendedglob nomatch prompt_subst menu_complete re_match_pcre
 unsetopt notify
 
 autoload -U zutil
@@ -187,12 +187,18 @@ rationalise-dot() {
 zle -N rationalise-dot
 bindkey . rationalise-dot
 
-
-# similar to history substring search but smaller, not quite as good
-# (doesn't work twice in a row unless you run something)
-
+autoload -Uz narrow-to-region
 _history-incremental-pattern-search-backward-with-buffer() {
-    zle history-incremental-pattern-search-backward $BUFFER
+    local state
+    endcommand="${BUFFER[(I);]}"
+    if [[ $endcommand -gt 0 ]]; then
+        MARK=$endcommand
+        narrow-to-region -S state
+    fi
+    zle history-incremental-pattern-search-backward -- ${${BUFFER## }%% }
+    if [[ $endcommand -gt 0 ]]; then
+        narrow-to-region -R state
+    fi
 }
 
 zle -N _history-incremental-pattern-search-backward-with-buffer
@@ -200,10 +206,12 @@ bindkey '^R' _history-incremental-pattern-search-backward-with-buffer
 bindkey -M isearch '^R' history-incremental-search-backward
 
 _up-arrow() {
-    if [[ -z $BUFFER ]] || [[ $HISTNO != $HISTCMD ]]; then
+    if [[ -z $BUFFER || ($HISTNO != $HISTCMD && $BUFFER = $(fc -l -n $HISTNO $HISTNO)) ]]; then
+        # back in history
         zle up-line-or-history
     else
-        zle history-incremental-pattern-search-backward $BUFFER
+        # search prefix - however, append from last ;
+        zle _history-incremental-pattern-search-backward-with-buffer
     fi
 }
 
@@ -215,23 +223,6 @@ bindkey -M isearch "\eOB" history-incremental-search-forward
 
 DIRSTACKSIZE=8
 setopt autopushd pushdminus pushdsilent pushdtohome
-
-_go-back() {
-    pushd -1
-    precmd
-    zle reset-prompt
-}
-
-_go-fwd() {
-    pushd +0
-    precmd
-    zle reset-prompt
-}
-
-zle -N _go-back
-zle -N _go-fwd
-bindkey '^[[1;3A' _go-back
-bindkey '^[[1;3B' _go-fwd
 
 mnt() {
     [ ! -d /run/media/hinton/"$1" ] && \
@@ -268,3 +259,7 @@ bindkey "^M" _accept_or_ls
 bindkey "^X^J" _dired
 
 eval $(dircolors -b $HOME/session/dircolors.ansi-light)
+
+autoload -Uz copy-earlier-word
+zle -N copy-earlier-word
+bindkey "^[m" copy-earlier-word

@@ -2,7 +2,7 @@
 (require 'json)
 
 (defvar epass-element-prefix "")
-(defvar epass-interesting-properties '(:PASSWORD :URL :USERNAME :MACHINE :PORT))
+(defvar epass-interesting-properties '(:PASSWORD :URL :USERNAME :MACHINE :PORT :SHARE :DOMAIN))
 
 (defun epass-properties (plist)
   (let (result)
