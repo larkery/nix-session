@@ -21,6 +21,10 @@
      firewall.enable = false;
      hostName = "keats"; # Define your hostname.
      domain = "cse.org.uk";
+     extraHosts = ''
+     127.0.0.1 keats.cse.org.uk
+     127.0.0.1 keats
+     '';
      networkmanager.enable = true;
      networkmanager.packages = with pkgs; [networkmanager_pptp];
   };
@@ -80,17 +84,25 @@
     autofs = {
       enable = true;
       timeout = 300;
+
       autoMaster =
       let
-      subconf = pkgs.writeText "auto" ''
-         *   -fstype=cifs,credentials=$HOME/.smb/$host.cred,uid=$UID       ://$host/&
-      '';
-      mapConf = pkgs.writeText "auto" ''
-         *   -fstype=autofs,-Dhost=& file:${subconf}
+        share = pkgs.writeScript "auto-share" ''
+        #!/bin/sh
+        NH="$AUTOFS_HOST"
+        NS="$1"
+        H="$AUTOFS_HOME"
+        CF="$H/.passwords/run/$NH-$NS.credentials"
+        rm -f -- "$CF"
+        mkfifo -- "$CF"
+        chown -- "$AUTOFS_USER" "$CF"
+        echo "write-credentials $NH $NS" | ${pkgs.socat}/bin/socat STDIN UNIX-CONNECT:"$H/.passwords/run/socket" > /dev/null
+        echo '-fstype=cifs,credentials='"$CF"',uid=$UID   ://'"$NH"'/'"$NS"
         '';
-        in ''
-        /net file:${mapConf}
-        '';
+        host  = pkgs.writeText "auto-host"  "*   -fstype=autofs,-DAUTOFS_HOST=& program:${share}" ;
+        top   = "/net file:${host}" ;
+      in top;
+
     };
   };
 
