@@ -1,7 +1,7 @@
 url file:///[\\/]+CSE-BS3-FILE[\\/]
-exec xdg-open ${${1//CSE-BS3-FILE?/\/net/cse-bs3-file/}//\\//}
+exec xdg-open "${${1//CSE-BS3-FILE?/\/net/cse-bs3-file/}//\\//}"
 scheme file
-exec xdg-open $(printf '%b' "${${${1//file://}//+/ }//\%/\\x}")
+exec xdg-open "$(printf '%b' "${${${1//file://}//+/ }//\%/\\x}")"
 mime application/pdf
 exec mupdf-x11 "$1"
 scheme mailto

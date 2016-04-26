@@ -2,7 +2,7 @@
 
 export XDG_OPEN_DEPTH=$(( ${XDG_OPEN_DEPTH:-0} + 1 ))
 
-if [[ $XDG_OPEN_DEPTH -gt 10 ]]; then
+if [[ $XDG_OPEN_DEPTH -gt 5 ]]; then
     notify-send "recursive xdg-open looop" "$1"
     exit 1
 fi
@@ -35,6 +35,7 @@ while read -r mode match; do
                 found=$?
             ;;
             scheme)
+                match="^$match:"
                 [[ -z $exists && "$1" =~ "${match}" ]]
                 found=$?
             ;;
@@ -44,8 +45,9 @@ while read -r mode match; do
             ;;
         esac
     elif [ $mode = exec ]; then
-        1=${(q-)1}
-        printf '%s' $match
+        #echo "$1"
+        #echo $match
+        #eval echo $match
         eval exec $match
     fi
 done < $HOME/.config/open-rules
