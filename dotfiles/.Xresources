@@ -1,4 +1,4 @@
-#define FONT Monospace-10
+#define FONT Monospace-11
 
 #define BGCOL cornsilk1
 #define FGCOL black
