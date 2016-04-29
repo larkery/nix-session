@@ -10,9 +10,10 @@ exec --no-startup-id dunst
 exec --no-startup-id xss-lock lock
 exec --no-startup-id ~/session/scripts/displays
 exec --no-startup-id xsetroot -solid gray10 -cursor_name left_ptr
+exec --no-startup-id setxkbmap
 
 set $mod Mod4
-font pango:Sans 8
+font pango:Sans Bold 7
 floating_modifier $mod
 workspace_auto_back_and_forth yes
 mouse_warping none
@@ -139,4 +140,23 @@ bar {
     status_command i3blocks
     separator_symbol "·"
     tray_padding 0
+
+
+   colors {
+      background #30363b
+      statusline #eae9da
+      separator  #eae9ada
+
+      focused_workspace  #eae9da #30363b #eae9da
+      active_workspace   #30363b #30363b #eae9da
+      inactive_workspace #30363b #30363b #888888
+      urgent_workspace   #9b6465 #30363b #eae9da
+   }
 }
+
+# class                 border  backgr. text    indicator
+client.focused          #000000 #708090 #ffffff #eae9da
+client.focused_inactive #000000 #5f676a #ffffff #5f676a
+client.unfocused        #000000 #30363b #888888 #30363b
+client.urgent           #000000 #9b6465 #ffffff #9b6465
+client.placeholder      #000000 #ffffff #ffffff #000000

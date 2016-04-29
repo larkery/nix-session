@@ -1,7 +1,7 @@
 #define FONT Monospace-11
 
-#define BGCOL cornsilk1
-#define FGCOL black
+#define BGCOL #F0F0F0
+#define FGCOL #252525
 
 xterm*background: BGCOL
 xterm*foreground: FGCOL
