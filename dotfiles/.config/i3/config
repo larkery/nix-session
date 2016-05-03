@@ -4,7 +4,6 @@
 exec --no-startup-id xsettingsd
 exec --no-startup-id pa-applet
 exec --no-startup-id nm-applet
-exec --no-startup-id cbatticon
 exec --no-startup-id emacs --daemon
 exec --no-startup-id dunst
 exec --no-startup-id xss-lock lock
