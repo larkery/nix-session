@@ -1,4 +1,4 @@
-#define FONT Monospace-11
+#define FONT Monospace-10
 
 #define LBGCOL #F0F0F0
 #define LFGCOL #252525
@@ -53,7 +53,7 @@ Emacs*menubar: 0
 Emacs*verticalScrollBars:0
 Emacs*toolBar:0
 
-Emacs*foreground: FGCOL
-Emacs*background: BGCOL
+Emacs*foreground: LFGCOL
+Emacs*background: LBGCOL
 Emacs*FontBackend: xft
 Emacs*font: FONT
