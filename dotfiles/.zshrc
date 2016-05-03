@@ -60,7 +60,7 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
 PROMPTSYM="▶"
 PROMPT="%F{blue}%~%f\${vcs_info_msg_0_}
-%(?,%F{black},%F{124})$PROMPTSYM%f "
+%(?,,%F{124})$PROMPTSYM%f "
 
 autoload -Uz vcs_info
 zstyle ':vcs_info:*' enable git svn hg

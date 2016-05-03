@@ -1,0 +1,42 @@
+#!/usr/bin/env zsh
+
+s () {
+    cat "/sys/class/power_supply/BAT0/$1"
+}
+
+. /sys/class/power_supply/BAT0/uevent
+
+
+per=$(( 100 * $POWER_SUPPLY_CHARGE_NOW / $POWER_SUPPLY_CHARGE_FULL ))
+dtime=$(printf '%.1fh' $(( 1.0 * $POWER_SUPPLY_CHARGE_NOW / $POWER_SUPPLY_CURRENT_NOW )))
+
+case $POWER_SUPPLY_STATUS in
+     Full)
+         echo "full"
+         ;;
+     Discharging)
+         echo "$per% ($dtime)"
+         ;;
+     *)
+         echo "$per%"
+         ;;
+esac
+
+echo
+
+if [[ $per -gt 95 ]]; then
+    echo '#ffffff'
+elif [[ $per -gt 90 ]]; then
+    echo '#32cd32'
+elif [[ $per -gt 80 ]]; then
+    echo '#3cb371'
+elif [[ $per -gt 50 ]]; then
+    echo '#ffd700'
+elif [[ $per -gt 25 ]]; then
+    echo '#ff8c00'
+elif [[ $per -gt 5 ]]; then
+    echo '#ff4500'
+else
+    echo '#ff0000'
+    notify-send "low power warning" -u critical -t 0 "$dtime remaining"
+fi

@@ -1,10 +1,13 @@
 #define FONT Monospace-11
 
-#define BGCOL #F0F0F0
-#define FGCOL #252525
+#define LBGCOL #F0F0F0
+#define LFGCOL #252525
 
-xterm*background: BGCOL
-xterm*foreground: FGCOL
+#define DBGCOL #161616
+#define DFGCOL #C2C2C2
+
+xterm*background: LBGCOL
+xterm*foreground: LFGCOL
 
 !black
 xterm*color0:  #000000
