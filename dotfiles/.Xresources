@@ -6,41 +6,41 @@
 #define DBGCOL #161616
 #define DFGCOL #C2C2C2
 
-xterm*background: LBGCOL
-xterm*foreground: LFGCOL
+XTerm*background: LBGCOL
+XTerm*foreground: LFGCOL
 
 !black
-xterm*color0:  #000000
-xterm*color8:  #000000
+XTerm*color0:  #000000
+XTerm*color8:  #000000
 !red
-xterm*color1:  #7f3202
-xterm*color9:  #7f3202
+XTerm*color1:  #7f3202
+XTerm*color9:  #7f3202
 !green
-xterm*color2:  #426d0f
-xterm*color10: #426d0f
+XTerm*color2:  #426d0f
+XTerm*color10: #426d0f
 !yellow
-xterm*color3:  #a67b07
-xterm*color11: #a67b07
+XTerm*color3:  #a67b07
+XTerm*color11: #a67b07
 !blue
-xterm*color4:  #0771a6
-xterm*color12: #0771a6
+XTerm*color4:  #0771a6
+XTerm*color12: #0771a6
 !magenta
-xterm*color5:  #a6a007
-xterm*color13: #a6a007
+XTerm*color5:  #a6a007
+XTerm*color13: #a6a007
 !cyan
-xterm*color6:  #008d9a
-xterm*color14: #008d9a
+XTerm*color6:  #008d9a
+XTerm*color14: #008d9a
 !white
-xterm*color7:  #ffffff
-xterm*color15: #ffffff
+XTerm*color7:  #ffffff
+XTerm*color15: #ffffff
 
-xterm*termName: xterm-256color
-xterm*faceName: FONT
-xterm*font: 7x13
-xterm*bellIsUrgent: true
-xterm*locale: true
-xterm*saveLines: 4096
-xterm*eightBitInput: false
+XTerm*termName: XTerm-256color
+XTerm*faceName: FONT
+XTerm*font: 7x13
+XTerm*bellIsUrgent: true
+XTerm*locale: true
+XTerm*saveLines: 4096
+XTerm*eightBitInput: false
 
 Xft.autohint:  0
 Xft.lcdfilter: lcddefault

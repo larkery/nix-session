@@ -19,6 +19,9 @@ mouse_warping none
 
 # run things
 bindsym $mod+Return exec i3-sensible-terminal
+bindsym $mod+Shift+Return exec xterm -name xterm-float
+for_window [instance="xterm-float"] floating enable
+
 bindsym $mod+w exec vimb
 bindsym $mod+e exec emacsclient -c -n
 
@@ -149,7 +152,7 @@ bar {
       focused_workspace  #eae9da #30363b #eae9da
       active_workspace   #30363b #30363b #eae9da
       inactive_workspace #30363b #30363b #888888
-      urgent_workspace   #9b6465 #30363b #eae9da
+      urgent_workspace   #000000 #9b6465 #ffffff
    }
 }
 
