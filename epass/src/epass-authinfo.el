@@ -118,6 +118,9 @@
                       port (cadr parts)))))
           (setq host (list host)))))
 
+  (if (numberp port)
+      (setq port (number-to-string port)))
+
   (let (result)
     (epass-map
      (lambda (match)
