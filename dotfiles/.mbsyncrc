@@ -21,6 +21,7 @@ Channel cse
     Patterns * !Deleted\ Items
     SyncState *
     Create Both
+    Expunge Both
 
 ########## Fastmail ##########
 
@@ -46,6 +47,7 @@ Channel fastmail-inbox
     Patterns INBOX
     SyncState *
     Create Both
+    Expunge Both
 
 Channel fastmail
     Master :fastmail-remote:
@@ -53,3 +55,4 @@ Channel fastmail
     Patterns * !INBOX
     SyncState *
     Create Both
+    Expunge Both

@@ -253,7 +253,7 @@ if __name__ == "__main__":
                 if act:
                     affected_maildirs.update(action(m, db))
                 if not(act) or log:
-                    print('\t%s %s' % (action.__name__, m), file=sys.stderr)
+                    print('\t%s %s' % (action.__name__, m.get_message_id()), file=sys.stderr)
             if (log):
                 print('\t' + str(counter) + ' matched', file=sys.stderr)
             del q

@@ -118,6 +118,9 @@ bindsym XF86MonBrightnessUp exec --no-startup-id xbacklight -inc 5
 bindsym XF86MonBrightnessDown exec --no-startup-id xbacklight -dec 5
 bindsym Shift+XF86MonBrightnessUp exec --no-startup-id xbacklight -inc 20
 bindsym Shift+XF86MonBrightnessDown exec --no-startup-id xbacklight -dec 20
+set $toggle_touchpad exec --no-startup-id synclient TouchpadOff=$(synclient -l | grep TouchpadOff | tr -d -c '01' | tr '01' '10')
+
+bindsym XF86Launch1 $toggle_touchpad
 
 set $i3_mode "I3: [l]oad config, [r]estart, [e]xit || SYSTEM: [h]ibernate, [s]hutdown"
 
