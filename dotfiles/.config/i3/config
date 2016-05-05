@@ -29,7 +29,8 @@ bindsym $mod+e exec emacsclient -c -n
 bindsym $mod+k kill
 
 # start dmenu (a program launcher)
-bindsym $mod+space exec --no-startup-id dmenu_run
+bindsym $mod+space fullscreen toggle
+bindsym $mod+d exec --no-startup-id dmenu_run
 
 # find urgent window
 bindsym $mod+u [urgent=latest] focus
@@ -69,9 +70,6 @@ bindsym $mod+semicolon split h
 
 # split in vertical orientation
 bindsym $mod+apostrophe split v
-
-# enter fullscreen mode for the focused container
-bindsym $mod+f fullscreen toggle
 
 # change container layout (stacked, tabbed, toggle split)
 bindsym $mod+period layout tabbed
