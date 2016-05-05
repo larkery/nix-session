@@ -4,7 +4,6 @@ CHANGED=("${(@f)$($SESSION_DIR/scripts/refile)}")
 CHANGED+=(fastmail-inbox)
 CHANGED+=(cse:Inbox)
 CHANGED+=(cse:JIRA)
-
 typeset -U CHANGED
 
 if [ ! "$?" -eq 0 ]

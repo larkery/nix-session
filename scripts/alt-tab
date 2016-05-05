@@ -1,0 +1,16 @@
+#!/bin/sh
+#TODO could make this work in jq entirely
+ups=""
+downs=""
+C=${2:-0}
+while [ $C -gt 0 ]; do
+      C=$(expr $C - 1)
+      ups="$ups, focus parent"
+      downs="$downs, focus child"
+done
+
+i3-msg "$ups"
+
+next=$(i3-msg -t get_tree | jq '..|select(.nodes?)|select(.nodes|map(.focused?)|any)|(.nodes[] | select(.focused) | .id) as $fid | (.nodes|map(.id)|index($fid)) as $fin | (.nodes|length) as $fmx | (($fin '$1' 1) %$fmx) as $fin2 | .nodes[$fin2].id')
+
+i3-msg "[con_id=$next] focus, $downs">/dev/null
