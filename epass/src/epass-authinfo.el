@@ -84,7 +84,7 @@
                               (epass-user alist)
                               (epass-password alist)))
            ))))
-    result))
+    (cdr result)))
 
 (defun epass-netrc-credentials (orig machine &rest ports)
   "Amend the result of ORIG for MACHINE and PORTS."
@@ -117,8 +117,6 @@
                 (setq host (car parts)
                       port (cadr parts)))))
           (setq host (list host)))))
-
-  (message "epass %s %s" host port)
 
   (let (result)
     (epass-map
