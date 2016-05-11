@@ -26,7 +26,7 @@ bindsym $mod+w exec vimb
 bindsym $mod+e exec emacsclient -c -n
 
 # kill focused window
-bindsym $mod+k kill
+bindsym $mod+h kill
 
 # start dmenu (a program launcher)
 bindsym $mod+space fullscreen toggle
@@ -36,34 +36,31 @@ bindsym $mod+d exec --no-startup-id dmenu_run
 bindsym $mod+u [urgent=latest] focus
 
 # alternatively, you can use the cursor keys:
-bindsym $mod+Left focus left
-bindsym $mod+Down focus down
-bindsym $mod+Up focus up
-bindsym $mod+Right focus right
+bindsym $mod+j focus left
+bindsym $mod+k focus down
+bindsym $mod+i focus up
+bindsym $mod+l focus right
 
 set $tab exec --no-startup-id ~/session/scripts/alt-tab
 
-bindsym $mod+j focus child
-bindsym $mod+Shift+j focus parent
+bindsym $mod+p focus parent
+bindsym $mod+Shift+p focus child
 
-bindsym $mod+i $tab + 0;
-bindsym $mod+o $tab + 1;
-bindsym $mod+p $tab + 2;
+bindsym $mod+Tab exec --no-startup-id ~/session/scripts/window
 
-bindsym $mod+Shift+I $tab - 0;
-bindsym $mod+Shift+O $tab - 1;
-bindsym $mod+Shift+P $tab - 2;
+bindsym $mod+o $tab + 0;
+bindsym $mod+Shift+O $tab - 0;
 
 # alternatively, you can use the cursor keys:
-bindsym $mod+Shift+Left move left
-bindsym $mod+Shift+Down move down
-bindsym $mod+Shift+Up move up
-bindsym $mod+Shift+Right move right
+bindsym $mod+Shift+j move left
+bindsym $mod+Shift+k move down
+bindsym $mod+Shift+i move up
+bindsym $mod+Shift+l move right
 
-bindsym $mod+Mod1+Left  focus left;  split v; focus right; move left
-bindsym $mod+Mod1+Right focus right; split v; focus left;  move right
-bindsym $mod+Mod1+Up    focus up;    split h; focus down;  move up
-bindsym $mod+Mod1+Down  focus down;  split h; focus up;    move down
+bindsym $mod+Mod1+j  focus left;  split v; focus right; move left
+bindsym $mod+Mod1+k focus right; split v; focus left;  move right
+bindsym $mod+Mod1+i    focus up;    split h; focus down;  move up
+bindsym $mod+Mod1+l  focus down;  split h; focus up;    move down
 
 # split in horizontal orientation
 bindsym $mod+semicolon split h
@@ -77,10 +74,10 @@ bindsym $mod+Shift+period split h, mark t, [class="__focused__" workspace="__foc
 bindsym $mod+slash layout toggle split
 
 # toggle tiling / floating
-bindsym $mod+l floating toggle
+bindsym $mod+f floating toggle
 
 # change focus between tiling / floating windows
-bindsym $mod+shift+l focus mode_toggle
+bindsym $mod+shift+f focus mode_toggle
 
 bindsym $mod+bracketleft  workspace prev_on_output
 bindsym $mod+bracketright workspace next_on_output

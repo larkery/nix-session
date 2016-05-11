@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+set -e
+
+i3windows() {
+    i3-msg -t get_tree | jq 'recurse(.nodes[]) | select(.type == "workspace") | (if .name == "__i3_scratch" then "SP" else .name end) as $wsname | recurse(.nodes[] // .floating_nodes[]) | select(.window) | select(.window_properties.class != "i3bar") | {window: .window, name: ($wsname + "'"\t"'" + .window_properties.class + "'"\t"'" + .name)}'
+}
+
+windows=$(i3windows)
+selection=$(echo "$windows" | jq -r ".name" | column -t -s '	' | dmenu -p 'win:' -i -1 -l 10)
+window_id=$(echo "$windows" | jq -r ".window" | sed "${selection}q;d")
+i3-msg "[id=\"$window_id\"] focus" >/dev/null
+~/.local/scripts/i3/warp

@@ -1,4 +1,4 @@
-#define FONT Monospace-10
+#define FONT Monospace-10.5
 
 #define LBGCOL #F0F0F0
 #define LFGCOL #252525
