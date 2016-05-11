@@ -22,21 +22,15 @@ import Data.Char (toLower)
 layout = XMonad.Layout.NoBorders.smartBorders $
          (tiled ||| htiled ||| full)
   where
-     -- tiled = Tall 1 (3/100) (1/2)
-     tiled = Ren.renamed [Ren.Replace "T"] $
-             MRT.mouseResizableTile {
-             MRT.masterFrac = 0.5,
-             MRT.fracIncrement = 0.05,
-             MRT.draggerType = MRT.FixedDragger { MRT.gapWidth = 4, MRT.draggerWidth = 6 }
-     }
-     htiled = Ren.renamed [Ren.Replace "Y"] $
-             MRT.mouseResizableTile {
-             MRT.masterFrac = 0.5,
-             MRT.fracIncrement = 0.05,
-             MRT.draggerType = MRT.FixedDragger { MRT.gapWidth = 4, MRT.draggerWidth = 6},
-             MRT.isMirrored = True
-     }
-     full = Ren.renamed [Ren.Replace "F"] $ XMonad.Layout.NoBorders.noBorders Full
+    tbase = MRT.mouseResizableTile {
+      MRT.masterFrac = 0.5,
+      MRT.fracIncrement = 0.05,
+      MRT.draggerType = MRT.FixedDragger
+        { MRT.gapWidth = 4, MRT.draggerWidth = 6 }
+      }
+    tiled = Ren.renamed [Ren.Replace "s"] $ tbase
+    htiled = Ren.renamed [Ren.Replace "d"] $ tbase { MRT.isMirrored = True }
+    full = Ren.renamed [Ren.Replace "f"] $ XMonad.Layout.NoBorders.noBorders Full
 
 prompt = XP.defaultXPConfig
    { XP.font = "xft:Sans:pixelsize=16"
@@ -69,11 +63,14 @@ main = xmonad $
       ("M-a e", spawn "emacsclient -c -n"),
       ("M-a w", spawn "vimb"),
 
-      ("M-g", XPW.windowPromptGoto prompt)
-
-    ] ++
-    [(prefix ++ (show number), (action (number - 1))) |
+      ("M-g", XPW.windowPromptGoto prompt),
+      ("M-k", kill)
+     ]
+     ++
+     [ ("M-" ++ k, sendMessage $ JumpToLayout k) | k <- ["s","d","f"] ]
+     ++
+     [(prefix ++ (show number), (action (number - 1))) |
       (prefix, action) <- [("M-", DW.withNthWorkspace W.greedyView),
                            ("M-S-", DW.withNthWorkspace W.shift)],
-      number <- [1..9]]
+       number <- [1..9]]
     )
