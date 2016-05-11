@@ -14,12 +14,16 @@ import qualified XMonad.StackSet as W
 
 import qualified XMonad.Prompt as XP
 import qualified XMonad.Prompt.Window as XPW
+import qualified XMonad.Actions.CycleRecentWS as Recent
+import qualified XMonad.Layout.Hidden as H
 
 import XMonad.Util.EZConfig
 import Data.List (isInfixOf, (\\))
 import Data.Char (toLower)
 
 layout = XMonad.Layout.NoBorders.smartBorders $
+         Ren.renamed [Ren.CutWordsLeft 1] $
+         H.hiddenWindows $
          (tiled ||| htiled ||| full)
   where
     tbase = MRT.mouseResizableTile {
@@ -63,8 +67,19 @@ main = xmonad $
       ("M-a e", spawn "emacsclient -c -n"),
       ("M-a w", spawn "vimb"),
 
-      ("M-g", XPW.windowPromptGoto prompt),
-      ("M-k", kill)
+      ("M-h", XPW.windowPromptBring prompt),
+      ("M-j", XPW.windowPromptGoto prompt),
+      ("M-k", kill),
+      ("M-l", Recent.cycleRecentWS [xK_Super_L] xK_l xK_j),
+
+      ("M-m",   withFocused H.hideWindow),
+      ("M-S-m", H.popNewestHiddenWindow),
+      ("M-a M-a", spawn "dmenu_run"),
+
+      ("M-u", sendMessage Shrink),
+      ("M-p", sendMessage Expand),
+      ("M-i", sendMessage MRT.ExpandSlave),
+      ("M-o", sendMessage MRT.ShrinkSlave)
      ]
      ++
      [ ("M-" ++ k, sendMessage $ JumpToLayout k) | k <- ["s","d","f"] ]

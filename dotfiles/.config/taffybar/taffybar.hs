@@ -39,7 +39,6 @@ main = do
   let clock = textClockNew Nothing clockCfg 1
       note  = notifyAreaNew defaultNotificationConfig
 
-      mem   = pollingGraphNew memCfg 2 memCallback
       cpu   = pollingGraphNew cpuCfg 2 cpuCallback
       batt  = batteryBarNew defaultBatteryConfig 10
       nm    = netMonitorNew 2 "wlan0"
@@ -59,6 +58,6 @@ main = do
                   , startWidgets = [ pager, note ]
                   , endWidgets = [ tray, clock
                                  , batt
-                                 , mem, cpu, nm
+                                 , cpu, nm
                                  ]
                   }
