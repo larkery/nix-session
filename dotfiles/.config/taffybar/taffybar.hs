@@ -1,5 +1,6 @@
 import System.Taffybar
 
+import System.Taffybar.Pager
 import System.Taffybar.TaffyPager
 import System.Taffybar.Systray
 import System.Taffybar.SimpleClock
@@ -34,12 +35,9 @@ main = do
                                                       ]
                                   , graphLabel = Just "cpu"
                                   }
-      clockCfg = "<span fgcolor='orange'>%a %b %_d %H:%M</span>"
-      weaCfg = (defaultWeatherConfig "ZSSS") {
-             weatherTemplate = "$tempC$°C" }
+      clockCfg = "<span fgcolor='white'>%a %b %_d %H:%M</span>"
   let clock = textClockNew Nothing clockCfg 1
       note  = notifyAreaNew defaultNotificationConfig
-      wea   = weatherNew weaCfg 10
 
       mem   = pollingGraphNew memCfg 2 memCallback
       cpu   = pollingGraphNew cpuCfg 2 cpuCallback
@@ -48,16 +46,18 @@ main = do
       tray  = systrayNew
       font  = "Monospace 8"
       pager = taffyPagerNew defaultPagerConfig
+              {
+                activeWindow = escape
+              , activeWorkspace  = colorize "black" "white" . wrap " " " " . escape
+              , visibleWorkspace = colorize "black" "gray" . wrap " " " " . escape
+              , hiddenWorkspace = colorize "gray" "" . wrap " " " " . escape
+              , urgentWorkspace = colorize "white" "red" . wrap " " " " . escape
+              }
 
-  rcParseString $ ""
-                ++ "style \"default\" {"
-                ++ " font_name = \"" ++ font ++ "\""
-                ++ " bg[NORMAL] = {0.0, 0.0, 0.0}"
-                ++ "}"
   defaultTaffybar defaultTaffybarConfig
                   { barHeight = 16
                   , startWidgets = [ pager, note ]
-                  , endWidgets = [ tray, wea, clock
+                  , endWidgets = [ tray, clock
                                  , batt
                                  , mem, cpu, nm
                                  ]

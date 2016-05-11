@@ -1,16 +1,5 @@
 # i3 config file (v4)
 
-# startup commands
-exec --no-startup-id xsettingsd
-exec --no-startup-id pa-applet
-exec --no-startup-id nm-applet
-exec --no-startup-id emacs --daemon
-exec --no-startup-id dunst
-exec --no-startup-id xss-lock lock
-exec --no-startup-id ~/session/scripts/displays
-exec --no-startup-id xsetroot -solid gray10 -cursor_name left_ptr
-exec --no-startup-id setxkbmap
-
 set $mod Mod4
 font pango:Sans Bold 7
 floating_modifier $mod
