@@ -94,7 +94,7 @@ main = xmonad $
       ("M-a w", spawn "vimb"),
       ("M-a d", spawn "dmenu_run"),
       ("M-a M-a", XPS.shellPrompt prompt),
-      ("M-a M-h", spawn "systemctl hibernate"),
+      ("M-a h", spawn "systemctl hibernate"),
 
       ("M-h", XPW.windowPromptBring prompt),
       ("M-j", XPW.windowPromptGoto  prompt),
