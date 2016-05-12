@@ -21,7 +21,6 @@ import qualified XMonad.Prompt.Window as XPW
 import qualified XMonad.Actions.CycleRecentWS as Recent
 import qualified XMonad.Layout.BoringWindows as Boring
 import XMonad.Actions.RotSlaves
-import qualified XMonad.Layout.LimitWindows as Lim
 import XMonad.Actions.WindowBringer (bringWindow) 
 
 import XMonad.Util.EZConfig
@@ -35,7 +34,6 @@ layout = XMonad.Layout.NoBorders.smartBorders $
          Boring.boringAuto $
 --         Ren.renamed [Ren.CutWordsLeft 1] $
          TU.twoUp $
---         Lim.limitWindows 10000 $
          (tiled ||| htiled ||| full -- ||| MRC.mrc
          )
   where
@@ -115,8 +113,7 @@ main = xmonad $
        ("M-[", rotSlavesUp),
        ("M-]", rotSlavesDown),
        
-       ("M-v",   Lim.setLimit 10000),
-       ("M-S-v", Lim.setLimit 2)
+       ("M-v",   TU.toggle)
      ]
      ++
      [ ("M-" ++ k, sendMessage $ JumpToLayout k) | k <- ["s","d","f"] ]
