@@ -48,8 +48,8 @@ main = do
               {
                 activeWindow = escape
               , activeWorkspace  = colorize "black" "white" . wrap " " " " . escape
-              , visibleWorkspace = colorize "black" "gray" . wrap " " " " . escape
-              , hiddenWorkspace = colorize "gray" "" . wrap " " " " . escape
+              , visibleWorkspace = colorize "black" "orange" . wrap " " " " . escape
+              , hiddenWorkspace = colorize "white" "" . wrap " " " " . escape
               , urgentWorkspace = colorize "white" "red" . wrap " " " " . escape
               }
 
