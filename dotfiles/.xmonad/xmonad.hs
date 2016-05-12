@@ -27,15 +27,16 @@ import XMonad.Util.EZConfig
 import Data.List (isInfixOf, (\\))
 import Data.Char (toLower)
 import Data.Maybe (isJust, fromJust, listToMaybe)
+import XMonad.Layout.Simplest
 
 import qualified XMonad.Layout.MouseResizableColumns as MRC
 
+as n x = Ren.renamed [Ren.Replace n] x
+
 layout = XMonad.Layout.NoBorders.smartBorders $
          Boring.boringAuto $
---         Ren.renamed [Ren.CutWordsLeft 1] $
-         TU.twoUp $
-         (tiled ||| htiled ||| full -- ||| MRC.mrc
-         )
+         (tiled ||| htiled ||| full) 
+         
   where
     tbase = MRT.mouseResizableTile {
       MRT.masterFrac = 0.5,
@@ -43,9 +44,9 @@ layout = XMonad.Layout.NoBorders.smartBorders $
       MRT.draggerType = MRT.FixedDragger
         { MRT.gapWidth = 3, MRT.draggerWidth = 6 }
       }
-    tiled = Ren.renamed [Ren.Replace "s"] $ tbase
-    htiled = Ren.renamed [Ren.Replace "d"] $ tbase { MRT.isMirrored = True }
-    full = Ren.renamed [Ren.Replace "f"] $ XMonad.Layout.NoBorders.noBorders Full
+    tiled = TU.twoUp $ as "s" tbase
+    htiled = TU.twoUp $ as "d" tbase { MRT.isMirrored = True }
+    full = as "f" $ XMonad.Layout.NoBorders.noBorders Simplest
 
 rotate [] = []
 rotate (x:xs) = xs ++ [x]
@@ -98,25 +99,26 @@ main = xmonad $
       ("M-S-<Tab>", Boring.focusUp),
       
       ("M-m", windows $ W.shift "min"),
-       ("M-S-m", bringFromMin),
+      ("M-S-m", bringFromMin),
 
-       ("M-a M-a", spawn "dmenu_run"),
+      ("M-a M-a", spawn "dmenu_run"),
 
-       ("M-u", sendMessage Shrink),
-       ("M-p", sendMessage Expand),
+      ("M-u", sendMessage Shrink),
+      ("M-p", sendMessage Expand),
 
-       ("M-i", Boring.focusUp),
-       ("M-o", Boring.focusDown),
-       ("M-S-i", windows W.swapUp),
-       ("M-S-o", windows W.swapDown),
+      ("M-i", Boring.focusUp),
+      ("M-o", Boring.focusDown),
+      ("M-S-i", windows W.swapUp),
+      ("M-S-o", windows W.swapDown),
       
-       ("M-[", rotSlavesUp),
-       ("M-]", rotSlavesDown),
+      ("M-[", rotSlavesUp),
+      ("M-]", rotSlavesDown),
        
-       ("M-v",   TU.toggle)
+      ("M-v",   TU.toggle)
      ]
      ++
-     [ ("M-" ++ k, sendMessage $ JumpToLayout k) | k <- ["s","d","f"] ]
+     [ ("M-" ++ k, (sendMessage $ JumpToLayout k) >> (sendMessage $ JumpToLayout $ "2up " ++ k))
+        | k <- ["s","d","f"] ]
      ++
      [(prefix ++ (show number), (action (number - 1))) |
       (prefix, action) <- [("M-",   DW.withNthWorkspace W.greedyView),
