@@ -17,10 +17,14 @@ import qualified XMonad.Actions.DynamicWorkspaces as DW
 import qualified XMonad.StackSet as W
 
 import qualified XMonad.Prompt as XP
+import qualified XMonad.Prompt.Shell as XPS
 import qualified XMonad.Prompt.Window as XPW
+
 import qualified XMonad.Actions.CycleRecentWS as Recent
 import qualified XMonad.Layout.BoringWindows as Boring
+
 import XMonad.Actions.RotSlaves
+
 import XMonad.Actions.WindowBringer (bringWindow) 
 
 import XMonad.Util.EZConfig
@@ -88,6 +92,9 @@ main = xmonad $
 
       ("M-a e", spawn "emacsclient -c -n"),
       ("M-a w", spawn "vimb"),
+      ("M-a d", spawn "dmenu_run"),
+      ("M-a M-a", XPS.shellPrompt prompt),
+      ("M-a M-h", spawn "systemctl hibernate"),
 
       ("M-h", XPW.windowPromptBring prompt),
       ("M-j", XPW.windowPromptGoto  prompt),
@@ -100,8 +107,6 @@ main = xmonad $
       
       ("M-m", windows $ W.shift "min"),
       ("M-S-m", bringFromMin),
-
-      ("M-a M-a", spawn "dmenu_run"),
 
       ("M-u", sendMessage Shrink),
       ("M-p", sendMessage Expand),
@@ -128,14 +133,14 @@ main = xmonad $
 
 
 prompt = XP.defaultXPConfig
-   { XP.font = "xft:Sans:pixelsize=16"
-   , XP.height = 32
+   { XP.font = "xft:Sans:pixelsize=14"
+   , XP.height = 20
    , XP.position = XP.Top
    , XP.borderColor = "#404040"
    , XP.fgColor = "#F5f5f5"
    , XP.bgColor = "#494949"
    , XP.fgHLight = "#F5f5f5"
    , XP.bgHLight = "#4169e1"
-   , XP.promptBorderWidth = 4
+   , XP.promptBorderWidth = 1
    , XP.searchPredicate = isInfixOf . (map toLower)
  }

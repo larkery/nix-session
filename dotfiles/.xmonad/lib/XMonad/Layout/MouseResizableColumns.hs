@@ -149,3 +149,6 @@ splitAtMany is (x:[]) = [[x]]
 splitAtMany (i:is) (x:xs) = let r:rs = splitAtMany ((i-1):is) xs in (x:r):rs
 -- all failure patterns are the same
 splitAtMany _ _ = []
+
+
+-- TODO how should this work??
