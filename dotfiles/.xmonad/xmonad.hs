@@ -33,13 +33,13 @@ import Data.Char (toLower)
 import Data.Maybe (isJust, fromJust, listToMaybe)
 import XMonad.Layout.Simplest
 
-import qualified XMonad.Layout.MouseResizableColumns as MRC
+import qualified XMonad.Layout.VarialColumn as VC
 
 as n x = Ren.renamed [Ren.Replace n] x
 
 layout = XMonad.Layout.NoBorders.smartBorders $
          Boring.boringAuto $
-         (tiled ||| htiled ||| full) 
+         (tiled ||| htiled ||| full ||| VC.varial)
          
   where
     tbase = MRT.mouseResizableTile {
@@ -119,7 +119,9 @@ main = xmonad $
       ("M-[", rotSlavesUp),
       ("M-]", rotSlavesDown),
        
-      ("M-v",   TU.toggle)
+      ("M-v",   TU.toggle),
+      ("M-c", sendMessage $ VC.NewColumn), -- this is useful (goes new column left; is new column right useful)
+      ("M-S-c", sendMessage $ VC.Balance) -- not sure this is useful
      ]
      ++
      [ ("M-" ++ k, (sendMessage $ JumpToLayout k) >> (sendMessage $ JumpToLayout $ "2up " ++ k))
