@@ -39,7 +39,7 @@ as n x = Ren.renamed [Ren.Replace n] x
 
 layout = XMonad.Layout.NoBorders.smartBorders $
          Boring.boringAuto $
-         (tiled ||| htiled ||| full ||| VC.varial)
+         (VC.varial ||| tiled ||| htiled ||| full)
          
   where
     tbase = MRT.mouseResizableTile {

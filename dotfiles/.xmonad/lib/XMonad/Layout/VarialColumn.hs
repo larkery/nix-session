@@ -6,6 +6,8 @@ import qualified XMonad.StackSet as W
 import XMonad hiding (tile, splitVertically, splitHorizontallyBy)
 import Data.Maybe
 import qualified Data.Set as S
+import XMonad.Util.XUtils
+import Data.Int (Int32)
 
 data OnInsert = Ignore | Focused Int
   deriving (Show, Read, Eq) -- ignore prevents column growth
@@ -15,7 +17,8 @@ data VarialColumn a = V
     columns :: [Column],
     insert :: OnInsert,
     rebalance :: Int,
-    gap :: Int
+    gap :: Int,
+    draggers :: [WDragger]
   } deriving (Show, Read)
 
 data Column = C
@@ -24,10 +27,23 @@ data Column = C
     rows :: [Rational]
   } deriving (Show, Read)
 
+
+-- the drag event produces dx/dy
+-- this is in screen space
+-- we have stuff which is instead in layout space
+-- it wouldn't be hard to make layout space = screen space
+-- but is that wise?
+
+data Dragger = ColumnDragger Int Position Dimension |
+               RowDragger Int Int Position Dimension
+  deriving (Show, Read)
+type WDragger = (Window, Dragger)
+
 data VarialMessage =
-  Balance          |
-  NewColumn |
-  EatColumn
+  Balance          | -- not sure this is useful
+  NewColumn | -- pop the focused window into a new column to the left
+  EatColumn -- make the focused window use up its whole column, moving
+            -- windows above left and below right.
 
 instance Message VarialMessage
 
@@ -36,20 +52,58 @@ varial = V
     columns = [],
     insert = Focused 2, -- this is how many columns we will go up to on a new window
     rebalance = 1, -- this is hysteresis; if we go down to 1 window, we attempt to rebalance.
-    gap = 2
+    gap = 2,
+    draggers = []
   }
 
 capacity (C { rows = r }) = length r
 
 instance LayoutClass VarialColumn Window where
   description _ = "Varial"
-  doLayout state screen stack = return $ layout state screen stack
+  doLayout state screen stack =
+    do destroyDraggers state
+       let (rectangles, draggers', mnewstate) = layout state screen stack
+       draggers'' <- mapM (addWindow (fromIntegral (gap state))) draggers'
+       let newstate = (fromMaybe state mnewstate)
+                      { draggers = draggers'' }
+       -- the result is fine, but we also need to add rectangles for all the draggers
+       -- oddly not doing this doesn't seem to cause any problems???
+       return $ (rectangles, Just newstate)
 
   -- message handling
+    -- TODO: event handling for draggers
   handleMessage state msg
-    | (Just Balance) <- fromMessage msg = return $ Just $ balance state
-    | (Just NewColumn) <- fromMessage msg = handleNewColumn state
+    | (Just Balance) <- fromMessage msg =
+        return $ Just $ balance state
+    | (Just NewColumn) <- fromMessage msg =
+        handleNewColumn state
+    | (Just e) <- fromMessage msg :: Maybe Event =
+        handleResize e (draggers state) >> return Nothing
+    | (Just Hide) <- fromMessage msg =
+        destroyDraggers state >> return (Just $ state { draggers = [] })
+    | (Just ReleaseResources) <- fromMessage msg =
+        destroyDraggers state >> return (Just $ state { draggers = [] })
     | otherwise = return Nothing
+
+-- given some draggers, make up windows for them.
+addWindow :: Int32 -> Dragger -> X WDragger
+addWindow gap d@(ColumnDragger cn x h) = do
+  win <- makeDraggerWindow xC_sb_h_double_arrow (Rectangle (x - gap) 0 (fromIntegral (gap * 2)) h)
+  return (win, d)
+--addWindow a = return $ 
+
+-- resize works by sending ourself a message about the resize
+handleResize :: Event -> [WDragger] -> X ()
+handleResize ButtonEvent { ev_window = ew, ev_event_type = et } draggers
+  | et == buttonPress, Just x <- lookup ew draggers = case x of
+      ColumnDragger col colpos _ ->
+        
+        return ()
+      _ -> return ()
+
+handleResize _ _ = return ()
+
+destroyDraggers x = mapM_ (deleteWindow . fst) $ draggers x
 
 times :: Int -> X () -> X ()
 times n a
@@ -78,16 +132,15 @@ handleNewColumn state =
      
      return $ fmap snd change
 
-
 -- given layout configuration, and a screen rectangle, and the workspace contents
 -- run the layout and produce rectangles for each window and the revised state
-layout :: VarialColumn a -> Rectangle -> W.Stack a -> ([(a, Rectangle)], Maybe (VarialColumn a))
+layout :: VarialColumn a -> Rectangle -> W.Stack a -> ([(a, Rectangle)], [Dragger], Maybe (VarialColumn a))
 layout state screen s@(W.Stack f u d) =
   -- check for new windows and update layout
   let newState = updateState state s
       runState = fromMaybe state newState
-      rectangles = createRectangles runState screen s
-  in (rectangles, newState)
+      (rectangles, draggers) = createRectangles runState screen s
+  in (rectangles, draggers, newState)
 
 -- handle addition and removal of windows using the two functions above.
 updateState :: VarialColumn a -> W.Stack a -> Maybe (VarialColumn a)
@@ -162,7 +215,7 @@ insertFocus v@(V {columns = cols, insert = Focused k}) fi n =
 
 -- produce the display rectangles for the layout
 -- this is fairly easy since all the other work is done elsewhere
-createRectangles :: VarialColumn a -> Rectangle -> W.Stack a -> [(a, Rectangle)]
+createRectangles :: VarialColumn a -> Rectangle -> W.Stack a -> ([(a, Rectangle)], [Dragger])
 createRectangles v@(V {columns = cs, gap = g}) (Rectangle sx sy sw sh) st@(W.Stack f u d) =
   let columnSpans = cutup g (fromIntegral sx) (fromIntegral sw) $ map width cs
       -- each pile of windows that's going to go in a column
@@ -174,11 +227,14 @@ createRectangles v@(V {columns = cs, gap = g}) (Rectangle sx sy sw sh) st@(W.Sta
                                (floor y :: Position)
                                (floor w :: Dimension)
                                (floor h :: Dimension)
+      columnDraggers = [ ColumnDragger i (floor colx :: Position) sh | (i, (colx, _)) <- zip [1..] $ drop 1 columnSpans ]
+      layoutResult = [ (window, makeRect cspan vspan) | (pile, column, cspan) <- zip3 splitWins cs columnSpans,
+                       (window, vspan) <- zip pile $
+                                          cutup g (fromIntegral sy) (fromIntegral sh) $
+                                          (rows column) ]
   in
-    [ (window, makeRect cspan vspan) | (pile, column, cspan) <- zip3 splitWins cs columnSpans,
-                                       (window, vspan) <- zip pile $
-                                                          cutup g (fromIntegral sy) (fromIntegral sh) $
-                                                          (rows column) ]
+    (layoutResult, columnDraggers)
+    
 
 cutup :: Int -> Rational -> Rational -> [Rational] -> [(Rational, Rational)]
 cutup gap' start extent fractions =
@@ -198,3 +254,26 @@ splitPlaces _ [] = []
 splitPlaces as (0:is) = splitPlaces as is
 splitPlaces as (i:is) = a0:(splitPlaces a1 is)
   where (a0, a1) = splitAt i as
+
+-- Mouse resizing
+
+-- we need to make an X window for each drag handle
+-- then when we get a drag event on a drag handle, we need to find the right row/col and hack it.
+
+makeDraggerWindow :: Glyph -> Rectangle -> X Window
+makeDraggerWindow g (Rectangle x y w h) = withDisplay $ \d -> do
+  win <- do
+    rw <- asks theRoot
+    let screen = defaultScreenOfDisplay d
+        visual = defaultVisualOfScreen screen
+        attrmask = cWOverrideRedirect
+    io $ allocaSetWindowAttributes $ \a -> do
+      set_override_redirect a True
+      createWindow d rw x y w h 0 0 inputOnly visual attrmask a
+  
+  io $ selectInput d win (exposureMask .|. buttonPressMask)
+  cursor <- io $ createFontCursor d g
+  io $ defineCursor d win cursor
+  io $ freeCursor d cursor
+  showWindow win
+  return win
