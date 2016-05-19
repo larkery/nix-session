@@ -38,18 +38,10 @@ import qualified XMonad.Layout.VarialColumn as VC
 as n x = Ren.renamed [Ren.Replace n] x
 
 layout = XMonad.Layout.NoBorders.smartBorders $
-         Boring.boringAuto $
-         (VC.varial ||| tiled ||| htiled ||| full)
+         Boring.boringAuto $ (tiled ||| full)
          
   where
-    tbase = MRT.mouseResizableTile {
-      MRT.masterFrac = 0.5,
-      MRT.fracIncrement = 0.05,
-      MRT.draggerType = MRT.FixedDragger
-        { MRT.gapWidth = 3, MRT.draggerWidth = 6 }
-      }
-    tiled = TU.twoUp $ as "s" tbase
-    htiled = TU.twoUp $ as "d" tbase { MRT.isMirrored = True }
+    tiled = VC.varial
     full = as "f" $ XMonad.Layout.NoBorders.noBorders Simplest
 
 rotate [] = []
@@ -113,15 +105,19 @@ main = xmonad $
 
       ("M-i", Boring.focusUp),
       ("M-o", Boring.focusDown),
-      ("M-S-i", windows W.swapUp),
-      ("M-S-o", windows W.swapDown),
+      --("M-S-i", windows W.swapUp),
+      --("M-S-o", windows W.swapDown),
       
       ("M-[", rotSlavesUp),
       ("M-]", rotSlavesDown),
        
       ("M-v",   TU.toggle),
-      ("M-c", sendMessage $ VC.NewColumn), -- this is useful (goes new column left; is new column right useful)
-      ("M-S-c", sendMessage $ VC.Balance) -- not sure this is useful
+      
+      ("M-S-o", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
+      ("M-S-i", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
+      ("M-c M-c",   withFocused $ \w -> sendMessage $ VC.ToNewColumn w),
+      ("M-c <Return>",     withFocused $ \w -> sendMessage $ VC.OccupyMaster w),
+      ("M-c 1", sendMessage $ VC.SetColumn 0 0.5)
      ]
      ++
      [ ("M-" ++ k, (sendMessage $ JumpToLayout k) >> (sendMessage $ JumpToLayout $ "2up " ++ k))
