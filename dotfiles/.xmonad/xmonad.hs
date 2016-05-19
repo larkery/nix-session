@@ -41,7 +41,7 @@ layout = XMonad.Layout.NoBorders.smartBorders $
          Boring.boringAuto $ (tiled ||| full)
          
   where
-    tiled = VC.varial
+    tiled = TU.twoUp $ VC.varial
     full = as "f" $ XMonad.Layout.NoBorders.noBorders Simplest
 
 rotate [] = []
