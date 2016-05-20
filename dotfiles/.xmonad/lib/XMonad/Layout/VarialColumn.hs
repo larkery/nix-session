@@ -52,23 +52,31 @@ ins a n s = ((S.take n s) >< a) >< (S.drop n s)
 
 -- remove a 1 and reweight the remainder
 del1 :: Int -> S.Seq Rational -> S.Seq Rational
-del1 n s = norm $ del n s
+del1 n s =
+  let k = (S.index s n)/(fromIntegral $ (S.length s) - 1) in
+    norm $
+    fmap (+ k) $
+    del n s
 
 norm :: S.Seq Rational -> S.Seq Rational
 norm s = fmap scale s
   where
     scale :: Rational -> Rational
     scale x = x / sum
-    -- length = fromIntegral $ S.length s
     sum = F.sum s
 
 del n s = (S.take n s) >< (S.drop (1 + n) s)
 
 ins1 :: Int -> S.Seq Rational -> S.Seq Rational
-ins1 n s = norm $ ins (S.singleton 1) n s 
+ins1 n s = norm $ ins newthings n s
+  where newthings = (S.singleton $ if S.null s then 1 else (1 % (fromIntegral $ S.length s)))
+
 insc = ins $ S.singleton $ newCol 1
 
 newCol n = S.fromList $ replicate n 1
+
+minimumSize :: Rational
+minimumSize = 0.05
 
 -- resize the thing at the position to have the given size in a way
 -- that preserves the total and doesn't make anything less than 0.1
@@ -76,7 +84,7 @@ changeS :: Int -> Rational -> S.Seq Rational -> S.Seq Rational
 changeS n r' s
   | null s = s
   | length s == 1 = s
-  | otherwise = let lim = 0.05
+  | otherwise = let lim = minimumSize
                     a0 = S.index s n
                     a1 = S.index s (n+1)
                     r = min (a0 + a1 - lim) $ max r' lim in
@@ -216,7 +224,11 @@ data Msg =
   UpOrLeft Window |
   DownOrRight Window |
   SetColumn Int Rational |
-  SetRow Int Int Rational
+  SetRow Int Int Rational |
+  GrabRow Window |
+  GrabColumn Window |
+  EqualizeColumn Rational Window |
+  Embiggen Rational Window
 
   deriving (Read, Show, Typeable)
 
@@ -249,6 +261,32 @@ instance LayoutClass LS Window where
            let n = (S.length $ S.index cs 0) - 1
            return $ Just $ (times n $ deleteRow 0 0) $ (times n $ insertRow 1 0) state       
 
+    | (Just (GrabColumn w)) <- fromMessage msg =
+        findWindowAnd w $ \(col,row,_) ->
+                            return $ Just $ state { cols = (Cols rs (S.adjust (grab row) col cs)) } 
+
+    | (Just (GrabRow w)) <- fromMessage msg =
+        findWindowAnd w $ \(col,_ , _) ->
+                            return $ Just $ state { cols = (Cols (grab col rs) cs) }
+  
+    | (Just (EqualizeColumn gen w)) <- fromMessage msg =
+        findWindowAnd w $ \(col, _, _) ->
+                            return $ Just $ state { cols = (Cols rs ((S.update
+                                                                      col
+                                                                      (norm $
+                                                                       S.fromList $
+                                                                       take (S.length $ S.index cs col) $
+                                                                       iterate (* gen) 1)
+                                                                      cs)))}
+    | (Just (Embiggen r w)) <- fromMessage msg =
+        let change = (max minimumSize) . (+ r) in
+        findWindowAnd w $ \(row, col, _) ->
+                            return $ Just $ state
+                               { cols = (Cols
+                                         (norm $ (S.adjust change col rs))
+                                         (S.adjust (norm . (S.adjust change row)) col cs)) }
+    
+                                  
     | (Just (SetColumn c r)) <- fromMessage msg =
         let rs' = changeS c r rs in
           return $ Just $ state { cols = (Cols rs' cs) }
@@ -299,6 +337,13 @@ instance LayoutClass LS Window where
                   | otherwise = return $ Just $ deleteRow col row $ insertCol (col + 1) state
             in result
 
+          grab :: Int -> S.Seq Rational -> S.Seq Rational
+          grab n s = let k = S.length s
+                         small = minimumSize * 2 in
+                       S.update n ((1%1) - (fromIntegral k) * small) $
+                       S.fromList $
+                       replicate k small
+
 dragHandler :: Dragger -> X ()
 dragHandler (ColumnDragger x0 d c) =
   flip mouseDrag (return ()) $
@@ -334,7 +379,7 @@ addDraggers (Rectangle sx sy sw sh) ws state@(LS { cols = (Cols rs cs) }) =
       columnDraggers = map columnDragger $ drop 1 $ reverse windowColumns
       columnDragger (col, ((_,(Rectangle wx wy ww wh)):_)) =
         let x = (wx + (fromIntegral ww)) in 
-          ((ColumnDragger sx sw col), (Rectangle x sy g sh))
+          ((ColumnDragger wx sw col), (Rectangle x sy g sh))
 
       -- windowDragger :: (a, Rectangle) -> (a, Rectangle)
       -- windowDragger (w, ) = 
@@ -345,7 +390,7 @@ addDraggers (Rectangle sx sy sw sh) ws state@(LS { cols = (Cols rs cs) }) =
       windowDragger :: Int -> (Int, (Window, Rectangle)) -> (Dragger, Rectangle)
       windowDragger c (r, (_, (Rectangle wx wy ww wh))) =
         let y = (wy+(fromIntegral wh)) in
-          ((WindowDragger sy sh c r), (Rectangle wx y ww g))
+          ((WindowDragger wy sh c r), (Rectangle wx y ww g))
 
       createDragger :: (Dragger, Rectangle) -> X (WDragger)
       createDragger (d, r) = do w <- makeDraggerWindow (glyphFor d) r

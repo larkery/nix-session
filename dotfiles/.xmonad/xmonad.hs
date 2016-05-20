@@ -3,8 +3,6 @@ import XMonad.Layout.Tabbed
 import XMonad.Layout.NoBorders
 import XMonad.Layout.LayoutCombinators
 
-import qualified XMonad.Layout.TwoUp as TU
-
 import XMonad.Util.Themes
 import XMonad.Config.Desktop
 import System.Taffybar.Hooks.PagerHints (pagerHints)
@@ -33,15 +31,18 @@ import Data.Char (toLower)
 import Data.Maybe (isJust, fromJust, listToMaybe)
 import XMonad.Layout.Simplest
 
+import qualified XMonad.Layout.LimitWindows as Limit
+
 import qualified XMonad.Layout.VarialColumn as VC
 
 as n x = Ren.renamed [Ren.Replace n] x
 
 layout = XMonad.Layout.NoBorders.smartBorders $
-         Boring.boringAuto $ (tiled ||| full)
+         Boring.boringAuto $ (tiled ||| twocol ||| full)
          
   where
-    tiled = TU.twoUp $ VC.varial
+    tiled = as "s" $ VC.varial
+    twocol = as "d" $ Limit.limitWindows 2 $ VC.varial
     full = as "f" $ XMonad.Layout.NoBorders.noBorders Simplest
 
 rotate [] = []
@@ -100,28 +101,28 @@ main = xmonad $
       ("M-m", windows $ W.shift "min"),
       ("M-S-m", bringFromMin),
 
-      ("M-u", sendMessage Shrink),
-      ("M-p", sendMessage Expand),
-
-      ("M-i", Boring.focusUp),
-      ("M-o", Boring.focusDown),
+      ("M-o", Boring.focusUp),
+      ("M-p", Boring.focusDown),
       --("M-S-i", windows W.swapUp),
       --("M-S-o", windows W.swapDown),
       
       ("M-[", rotSlavesUp),
       ("M-]", rotSlavesDown),
-       
-      ("M-v",   TU.toggle),
       
       ("M-S-o", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
-      ("M-S-i", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
-      ("M-c M-c",   withFocused $ \w -> sendMessage $ VC.ToNewColumn w),
-      ("M-c <Return>",     withFocused $ \w -> sendMessage $ VC.OccupyMaster w),
-      ("M-c 1", sendMessage $ VC.SetColumn 0 0.5)
+      ("M-S-p", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
+      
+      ("M-c M-c",   withFocused $ \w -> sendMessage $ VC.ToNewColumn w),      
+      ("M-c c", withFocused $ \w -> sendMessage $ VC.GrabColumn w),
+      ("M-c h", withFocused $ \w -> sendMessage $ VC.GrabRow w),
+      ("M-c e", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 1 w),
+      ("M-c q", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 0.5 w),
+
+      ("M-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0.1 w),
+      ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-0.1 :: Rational) w)
      ]
      ++
-     [ ("M-" ++ k, (sendMessage $ JumpToLayout k) >> (sendMessage $ JumpToLayout $ "2up " ++ k))
-        | k <- ["s","d","f"] ]
+     [ ("M-" ++ k, (sendMessage $ JumpToLayout k)) | k <- ["s","d","f"] ]
      ++
      [(prefix ++ (show number), (action (number - 1))) |
       (prefix, action) <- [("M-",   DW.withNthWorkspace W.greedyView),
