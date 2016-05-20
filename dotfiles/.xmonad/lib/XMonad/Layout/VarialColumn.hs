@@ -14,6 +14,8 @@ import Data.Int (Int32)
 import Data.Ratio ((%))
 import Data.List (elemIndex)
 
+import qualified Debug.Trace as D
+
 data Axis = V | H deriving (Read, Show)
 
 type Col = S.Seq Rational
@@ -149,6 +151,8 @@ update
   | newCount < oldCount =
     -- windows deleted. delete windows that are before the focused window;
     -- there is an issue here if there are not enough windows before the focused window.
+--    D.traceShow
+--    ("windows closed", oldCount-newCount, delFromC, delFromR) $
     Just $ balance $ times (oldCount - newCount) (deleteRow delFromC delFromR) ls 
   | (newCount > oldCount) && (ic > numColumns) = -- windows added, stick them all in a column and balance
     Just $ balance $ times (newCount - oldCount - 1) (insertRow focusCol 0) $ insertCol focusCol ls
@@ -160,7 +164,8 @@ update
     newCount = length $ W.integrate stack
     oldCount = windowCount ls
     (focusCol, focusRow) = findWindow (length u) cs
-    (delFromC, delFromR) = findWindow (max 0 ((length u) - oldCount + newCount)) cs
+    (delFromC, delFromR) = findWindow (max 0 (1 + (length u) -
+                                              oldCount + newCount)) cs
 
 findWindow :: Int -> S.Seq Col -> (Int, Int)
 findWindow n cs

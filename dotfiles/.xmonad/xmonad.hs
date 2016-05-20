@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+
 import XMonad hiding ( (|||) )
 import XMonad.Layout.Tabbed
 import XMonad.Layout.NoBorders
@@ -29,21 +31,40 @@ import XMonad.Util.EZConfig
 import Data.List (isInfixOf, (\\))
 import Data.Char (toLower)
 import Data.Maybe (isJust, fromJust, listToMaybe)
-import XMonad.Layout.Simplest
+
+import Control.Monad (when)
 
 import qualified XMonad.Layout.LimitWindows as Limit
 
 import qualified XMonad.Layout.VarialColumn as VC
 
+import XMonad.Layout.LayoutModifier
+
+import Data.Maybe (fromMaybe)
+
 as n x = Ren.renamed [Ren.Replace n] x
 
+data AddCount a = AddCount Int Int deriving (Show, Read)
+
+instance LayoutModifier AddCount a where
+  pureModifier s r stackm wrs =
+    let total = length $ W.integrate' stackm
+        visible = length wrs
+        state = (AddCount total visible) in
+      (wrs, Just state)
+  modifyDescription (AddCount t v) l
+    | t > v = description l ++ " (+" ++ (show (t - v)) ++ ")"
+    | otherwise = description l
+
+addCount = ModifiedLayout ((AddCount 0 0) :: AddCount Window)
+
 layout = XMonad.Layout.NoBorders.smartBorders $
+         addCount $
          Boring.boringAuto $ (tiled ||| twocol ||| full)
-         
   where
     tiled = as "s" $ VC.varial
     twocol = as "d" $ Limit.limitWindows 2 $ VC.varial
-    full = as "f" $ XMonad.Layout.NoBorders.noBorders Simplest
+    full = as "f" $ Full
 
 rotate [] = []
 rotate (x:xs) = xs ++ [x]
@@ -65,6 +86,22 @@ bringFromMin = windows bringHeadOfMin
                    return $ win
           in if isJust firstMin then bringWindow (fromJust firstMin) ws
              else ws
+
+-- bindings which work in certain layouts
+
+inLayout :: [(String, X ())] -> X () -> X ()
+inLayout as d =
+  do lname <- gets (description . W.layout . W.workspace . W.current . windowset)
+     let lname' = head $ words lname
+     fromMaybe d $ lookup lname' as 
+
+focusUp = inLayout
+  [("f", windows W.focusUp)]
+  Boring.focusUp
+
+focusDown = inLayout
+  [("f", windows W.focusDown)]
+  Boring.focusDown
 
 main = xmonad $
   pagerHints $
@@ -95,22 +132,20 @@ main = xmonad $
       ("M-l", cycleRecentPopulated [xK_Super_L] xK_l xK_j),
       ("M-y", viewEmptyWorkspace),
 
-      ("M-<Tab>", Boring.focusDown),
-      ("M-S-<Tab>", Boring.focusUp),
+      ("M-<Tab>", focusDown),
+      ("M-S-<Tab>", focusUp),
       
       ("M-m", windows $ W.shift "min"),
       ("M-S-m", bringFromMin),
 
-      ("M-o", Boring.focusUp),
-      ("M-p", Boring.focusDown),
-      --("M-S-i", windows W.swapUp),
-      --("M-S-o", windows W.swapDown),
+      ("M-o", focusUp),
+      ("M-p", focusDown),
       
       ("M-[", rotSlavesUp),
       ("M-]", rotSlavesDown),
       
-      ("M-S-o", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
-      ("M-S-p", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
+      ("M-S-p", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
+      ("M-S-o", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
       
       ("M-c M-c",   withFocused $ \w -> sendMessage $ VC.ToNewColumn w),      
       ("M-c c", withFocused $ \w -> sendMessage $ VC.GrabColumn w),
