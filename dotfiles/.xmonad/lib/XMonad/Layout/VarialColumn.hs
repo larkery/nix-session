@@ -43,7 +43,7 @@ data Dragger = WindowDragger Position Dimension Int Int |
 type WDragger = (Window, Dragger)
 
 varial = LS { cols = (Cols S.empty S.empty),
-              gap = 2,
+              gap = 1,
               balanceColumns = 1,
               insertColumns = 2,
               draggers = []
@@ -381,21 +381,22 @@ addDraggers (Rectangle sx sy sw sh) ws state@(LS { cols = (Cols rs cs) }) =
 
       windowColumns = zip [0..] $ splitPlaces ws $ map S.length $ F.toList cs
       
-      columnDraggers = map columnDragger $ drop 1 $ reverse windowColumns
-      columnDragger (col, ((_,(Rectangle wx wy ww wh)):_)) =
+      columnDraggers bw = map (columnDragger bw) $ drop 1 $ reverse windowColumns
+      columnDragger bw (col, ((_,(Rectangle wx wy ww wh)):_)) =
         let x = (wx + (fromIntegral ww)) in 
-          ((ColumnDragger wx sw col), (Rectangle x sy g sh))
+          ((ColumnDragger wx sw col), (Rectangle (x - (fromIntegral bw)) sy (g + 2 * bw) sh))
 
       -- windowDragger :: (a, Rectangle) -> (a, Rectangle)
       -- windowDragger (w, ) = 
 
-      windowDraggers = (flip concatMap) windowColumns $
-                       \(column, windows) -> map (windowDragger column) $
-                                             drop 1 $ reverse $ zip [0 .. ] windows
-      windowDragger :: Int -> (Int, (Window, Rectangle)) -> (Dragger, Rectangle)
-      windowDragger c (r, (_, (Rectangle wx wy ww wh))) =
+      windowDraggers bw = (flip concatMap) windowColumns $
+                          \(column, windows) -> map (windowDragger bw column) $
+                                                drop 1 $ reverse $ zip [0 .. ] windows
+
+      windowDragger :: Dimension -> Int -> (Int, (Window, Rectangle)) -> (Dragger, Rectangle)
+      windowDragger bw c (r, (_, (Rectangle wx wy ww wh))) =
         let y = (wy+(fromIntegral wh)) in
-          ((WindowDragger wy sh c r), (Rectangle wx y ww g))
+          ((WindowDragger wy sh c r), (Rectangle wx (y - (fromIntegral bw)) ww (g + 2 * bw)))
 
       createDragger :: (Dragger, Rectangle) -> X (WDragger)
       createDragger (d, r) = do w <- makeDraggerWindow (glyphFor d) r
@@ -422,5 +423,6 @@ addDraggers (Rectangle sx sy sw sh) ws state@(LS { cols = (Cols rs cs) }) =
         showWindow win
         return win
   in
-    do draggers <- mapM createDragger (columnDraggers ++ windowDraggers)
+    do bw <- asks (borderWidth . config)
+       draggers <- mapM createDragger ((columnDraggers bw) ++ (windowDraggers bw))
        return state { draggers = draggers }
