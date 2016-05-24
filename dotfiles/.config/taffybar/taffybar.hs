@@ -24,6 +24,7 @@ import qualified Data.Map as M
 import Data.Maybe
 import qualified Debug.Trace as D
 
+import Control.Applicative
 
 memCallback = do
   mi <- parseMeminfo
@@ -41,10 +42,16 @@ readBatt = do
 
 
 battStat :: M.Map String String -> Maybe (Integer, Integer, Integer)
-battStat m = do full <- M.lookup "POWER_SUPPLY_CHARGE_FULL" m
-                now <- M.lookup "POWER_SUPPLY_CHARGE_NOW" m
-                current <- M.lookup "POWER_SUPPLY_CURRENT_NOW" m
-                return $ (read now :: Integer, read full :: Integer, read current :: Integer)
+battStat m =
+  let a = do full <- M.lookup "POWER_SUPPLY_CHARGE_FULL" m
+             now <- M.lookup "POWER_SUPPLY_CHARGE_NOW" m
+             current <- M.lookup "POWER_SUPPLY_CURRENT_NOW" m
+             return $ (read now :: Integer, read full :: Integer, read current :: Integer)
+      b = do full <- M.lookup "POWER_SUPPLY_ENERGY_FULL" m
+             now <- M.lookup "POWER_SUPPLY_ENERGY_NOW" m
+             current <- M.lookup "POWER_SUPPLY_POWER_NOW" m
+             return $ (read now :: Integer, read full :: Integer, read current :: Integer)
+  in a <|> b 
 
 battsum :: IO Double
 battsum = do
