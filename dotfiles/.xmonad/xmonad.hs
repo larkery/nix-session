@@ -40,6 +40,9 @@ import qualified XMonad.Layout.VarialColumn as VC
 
 import XMonad.Layout.LayoutModifier
 
+import XMonad.Actions.ShowText (flashText, defaultSTConfig)
+import XMonad.Layout.ShowWName
+
 import Data.Maybe (fromMaybe)
 
 as n x = Ren.renamed [Ren.Replace n] x
@@ -58,7 +61,13 @@ instance LayoutModifier AddCount a where
 
 addCount = ModifiedLayout ((AddCount 0 0) :: AddCount Window)
 
-layout = XMonad.Layout.NoBorders.smartBorders $
+layout = -- showWName' defaultSWNConfig 
+         -- {
+         --   swn_font = "xft:Sans:pixelsize=32"
+         -- , swn_bgcolor = "orange"
+         -- , swn_fade = 0.5
+         -- } $
+         XMonad.Layout.NoBorders.smartBorders $
          addCount $
          Boring.boringAuto $ (tiled ||| twocol ||| full)
   where
@@ -157,7 +166,8 @@ main = xmonad $
       ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-0.1 :: Rational) w)
      ]
      ++
-     [ ("M-" ++ k, (sendMessage $ JumpToLayout k)) | k <- ["s","d","f"] ]
+     [ ("M-" ++ k, (-- (flashText defaultSTConfig 1 k)
+                    (sendMessage $ JumpToLayout k))) | k <- ["s","d","f"] ]
      ++
      [(prefix ++ (show number), (action (number - 1))) |
       (prefix, action) <- [("M-",   DW.withNthWorkspace W.greedyView),

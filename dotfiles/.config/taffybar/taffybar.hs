@@ -18,13 +18,41 @@ import System.Taffybar.Battery
 
 import System.Taffybar.NetMonitor
 
+import Data.List.Split (splitOn)
+import Data.Ratio
+import qualified Data.Map as M
+import Data.Maybe
+import qualified Debug.Trace as D
+
+
 memCallback = do
   mi <- parseMeminfo
   return [memoryUsedRatio mi]
 
 cpuCallback = do
   (userLoad, systemLoad, totalLoad) <- cpuLoad
-  return [totalLoad, systemLoad]
+  return [totalLoad, systemLoad] 
+
+
+readBatt = do
+  thelines <- readFile "/sys/class/power_supply/BAT0/uevent"
+  let result = map (break (== '=')) $ lines $ thelines
+  return $ M.fromList $ map (\(a, b) -> (a, drop 1 b)) result
+
+
+battStat :: M.Map String String -> Maybe (Integer, Integer, Integer)
+battStat m = do full <- M.lookup "POWER_SUPPLY_CHARGE_FULL" m
+                now <- M.lookup "POWER_SUPPLY_CHARGE_NOW" m
+                current <- M.lookup "POWER_SUPPLY_CURRENT_NOW" m
+                return $ (read now :: Integer, read full :: Integer, read current :: Integer)
+
+battsum :: IO Double
+battsum = do
+  dat <- readBatt
+  return $ fromMaybe 0 $ do (n, f, r) <- battStat dat
+                            let per =  (n % f) 
+                            return $ fromRational per
+              
 
 main = do
   let memCfg = defaultGraphConfig { graphDataColors = [(1, 0, 0, 1)]
@@ -38,9 +66,10 @@ main = do
       clockCfg = "<span fgcolor='white'>%a %b %_d %H:%M</span>"
   let clock = textClockNew Nothing clockCfg 1
       note  = notifyAreaNew defaultNotificationConfig
+      
+      bat = pollingBarNew defaultBatteryConfig 10 battsum
 
       cpu   = pollingGraphNew cpuCfg 2 cpuCallback
-      batt  = batteryBarNew defaultBatteryConfig 10
       nm    = netMonitorNew 2 "wlan0"
       tray  = systrayNew
       font  = "Monospace 8"
@@ -57,7 +86,7 @@ main = do
                   { barHeight = 16
                   , startWidgets = [ pager, note ]
                   , endWidgets = [ tray, clock
-                                 , batt
+                                 , bat
                                  , cpu, nm
                                  ]
                   }
