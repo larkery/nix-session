@@ -33,7 +33,9 @@ data LS a = LS
             balanceColumns :: Int,
             insertColumns :: Int,
 
-            draggers :: [WDragger]
+            draggers :: [WDragger],
+
+            lastContent :: [a]
           } deriving (Read, Show)
 
 data Dragger = WindowDragger Position Dimension Int Int |
@@ -46,7 +48,8 @@ varial = LS { cols = (Cols S.empty S.empty),
               gap = 1,
               balanceColumns = 1,
               insertColumns = 2,
-              draggers = []
+              draggers = [],
+              lastContent = []
               }
 
 ins :: S.Seq a -> Int -> S.Seq a -> S.Seq a
@@ -163,14 +166,14 @@ update
     numColumns = S.length cs
     newCount = length $ W.integrate stack
     oldCount = windowCount ls
-    (focusCol, focusRow) = findWindow (length u) cs
-    (delFromC, delFromR) = findWindow (max 0 (1 + (length u) -
+    (focusCol, focusRow) = fromMaybe (0,0) $ findWindow (length u) cs
+    (delFromC, delFromR) = fromMaybe (0,0) $ findWindow (max 0 (1 + (length u) -
                                               oldCount + newCount)) cs
 
-findWindow :: Int -> S.Seq Col -> (Int, Int)
+findWindow :: Int -> S.Seq Col -> Maybe (Int, Int)
 findWindow n cs
-  | coordinates == [] = (0, 0)
-  | otherwise = coordinates !! n
+  | n >= length coordinates = D.traceShow (coordinates, n) Nothing
+  | otherwise = Just $ coordinates !! n
   where coordinates = [(col, row) | (col, rows) <- zip [0..] (F.toList cs),
                                     row <- take (S.length rows) [0..]]
 
@@ -247,9 +250,11 @@ instance LayoutClass LS Window where
     let (ws, statem) = layout state screen stack
     destroyDraggers state
     state' <- addDraggers screen ws (fromMaybe state statem)
-    return (ws, Just state')
+    let state'' = state' 
+               { lastContent = W.integrate stack }
+    return (ws, Just state'')
   
-  handleMessage state@(LS {cols = (Cols rs cs)}) msg
+  handleMessage state@(LS {cols = (Cols rs cs), lastContent = lcon}) msg
     -- row/column operations (shift column, move window out of column or into column, eat column)
     -- todo: tidy up and wrap around
     | (Just (DownOrRight w)) <- fromMessage msg = findWindowAnd w goDownOrRight
@@ -284,12 +289,14 @@ instance LayoutClass LS Window where
                                                                        iterate (* gen) 1)
                                                                       cs)))}
     | (Just (Embiggen r w)) <- fromMessage msg =
-        let change = (max minimumSize) . (+ r) in
+        let addr = (max minimumSize) . (+ r)
+            change s a = norm $ S.adjust addr s a
+        in
         findWindowAnd w $ \(row, col, _) ->
                             return $ Just $ state
                                { cols = (Cols
-                                         (norm $ (S.adjust change col rs))
-                                         (S.adjust (norm . (S.adjust change row)) col cs)) }
+                                         (change col rs)
+                                         (S.adjust (change row) col cs)) }
     
                                   
     | (Just (SetColumn c r)) <- fromMessage msg =
@@ -301,10 +308,10 @@ instance LayoutClass LS Window where
             return $ Just $ state { cols = (Cols rs cs') }
     
     | (Just Hide) <- fromMessage msg =
-        destroyDraggers state >> return (Just $ state { draggers = [] })
+        destroyDraggers state >> return (Just $ state { draggers = [], lastContent = [] })
 
     | (Just ReleaseResources) <- fromMessage msg =
-        destroyDraggers state >> return (Just $ state { draggers = [] })
+        destroyDraggers state >> return (Just $ state { draggers = [], lastContent = [] })
 
     | (Just e) <- fromMessage msg :: Maybe Event =
         handleResize e (draggers state) >> return Nothing
@@ -312,12 +319,14 @@ instance LayoutClass LS Window where
     -- resize operations (set fraction, expand in direction)
     | otherwise = return Nothing
     where lastCol = (S.length cs) - 1
+          -- this is not sufficient because our layout may be in a modifier which is hiding some windows.
           findWindowAnd :: Window -> ((Int, Int, Int) -> X (Maybe (LS Window))) -> X (Maybe (LS Window))
           findWindowAnd w f = do st <- gets (W.stack . W.workspace . W.current . windowset)
                                  let maybeArgs = do stack@(W.Stack f u d) <- st
-                                                    windowIndex <- if f == w then Just $ length u
-                                                                   else elemIndex w $ W.integrate stack
-                                                    let (c, r) = findWindow windowIndex cs
+                                                    windowIndex <- elemIndex w lcon
+--                                                                   if f == w then Just $ length u
+--                                                                   else elemIndex w $ W.integrate stack
+                                                    (c, r) <- findWindow windowIndex cs
                                                     return (c, r, windowIndex)
                                  case maybeArgs of
                                    Just a -> f a
