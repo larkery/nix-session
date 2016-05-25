@@ -4,7 +4,7 @@ import XMonad hiding ( (|||) )
 import XMonad.Layout.Tabbed
 import XMonad.Layout.NoBorders
 import XMonad.Layout.LayoutCombinators
-
+import System.Exit
 import XMonad.Util.Themes
 import XMonad.Config.Desktop
 import System.Taffybar.Hooks.PagerHints (pagerHints)
@@ -44,6 +44,8 @@ import XMonad.Actions.ShowText (flashText, defaultSTConfig)
 import XMonad.Layout.ShowWName
 
 import Data.Maybe (fromMaybe)
+
+import qualified XMonad.Actions.CycleWS as C
 
 as n x = Ren.renamed [Ren.Replace n] x
 
@@ -125,20 +127,24 @@ main = xmonad $
     `removeKeysP`
     [p ++ [n] | p <- ["M-", "M-S-"], n <- ['1'..'9']]
     `additionalKeysP`
-    ([
-      -- not sure
+    ([("M-<Escape>", spawn "xmonad --recompile; xmonad --restart"),
+      ("M-S-<Escape>", io (exitWith ExitSuccess)),
       ("M-<Return>", DWM.dwmpromote),
-
+      
+      ("M-l", C.moveTo C.Prev C.NonEmptyWS),
+      ("M-;", C.moveTo C.Next C.NonEmptyWS),
+      
       ("M-a e", spawn "emacsclient -c -n"),
       ("M-a w", spawn "vimb"),
       ("M-a d", spawn "dmenu_run"),
       ("M-a M-a", XPS.shellPrompt prompt),
       ("M-a h", spawn "systemctl hibernate"),
+      ("M-a l", spawn "systemctl suspend"),
 
       ("M-h", XPW.windowPromptBring prompt),
       ("M-j", XPW.windowPromptGoto  prompt),
       ("M-k", kill),
-      ("M-l", cycleRecentPopulated [xK_Super_L] xK_l xK_j),
+
       ("M-y", viewEmptyWorkspace),
 
       ("M-<Tab>", focusDown),
@@ -150,8 +156,8 @@ main = xmonad $
       ("M-o", focusUp),
       ("M-p", focusDown),
       
-      ("M-[", rotSlavesUp),
-      ("M-]", rotSlavesDown),
+      ("M-,", rotSlavesUp),
+      ("M-.", rotSlavesDown),
       
       ("M-S-p", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
       ("M-S-o", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
@@ -166,13 +172,17 @@ main = xmonad $
       ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-0.1 :: Rational) w)
      ]
      ++
-     [ ("M-" ++ k, (-- (flashText defaultSTConfig 1 k)
-                    (sendMessage $ JumpToLayout k))) | k <- ["s","d","f"] ]
+     [ ("M-" ++ k, ((sendMessage $ JumpToLayout k))) | k <- ["s","d","f"] ]
      ++
      [(prefix ++ (show number), (action (number - 1))) |
       (prefix, action) <- [("M-",   DW.withNthWorkspace W.greedyView),
                            ("M-S-", DW.withNthWorkspace W.shift)],
        number <- [1..9]]
+      ++
+     [(prefix ++ key, (action number)) |
+      (prefix, action) <- [("M-",   DW.withNthWorkspace W.greedyView),
+                           ("M-S-", DW.withNthWorkspace W.shift)],
+       (number, key) <- zip [0..] ["q","w","e","r"]]
     )
 
 
