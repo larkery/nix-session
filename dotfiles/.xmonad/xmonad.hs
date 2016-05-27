@@ -44,7 +44,6 @@ import XMonad.Actions.ShowText (flashText, defaultSTConfig)
 import XMonad.Layout.ShowWName
 
 import Data.Maybe (fromMaybe)
-
 import qualified XMonad.Actions.CycleWS as C
 
 as n x = Ren.renamed [Ren.Replace n] x
@@ -133,19 +132,20 @@ main = xmonad $
       
       ("M-l", C.moveTo C.Prev C.NonEmptyWS),
       ("M-;", C.moveTo C.Next C.NonEmptyWS),
-      
+      ("M-y", tagToEmptyWorkspace),
+
       ("M-a e", spawn "emacsclient -c -n"),
       ("M-a w", spawn "vimb"),
       ("M-a d", spawn "dmenu_run"),
       ("M-a M-a", XPS.shellPrompt prompt),
       ("M-a h", spawn "systemctl hibernate"),
       ("M-a l", spawn "systemctl suspend"),
+      ("M-a m", spawn "xdg-open mailto:"),
+      ("M-a M-m", spawn "notmuch new"),
 
       ("M-h", XPW.windowPromptBring prompt),
       ("M-j", XPW.windowPromptGoto  prompt),
       ("M-k", kill),
-
-      ("M-y", viewEmptyWorkspace),
 
       ("M-<Tab>", focusDown),
       ("M-S-<Tab>", focusUp),

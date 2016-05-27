@@ -90,7 +90,7 @@ main = do
               }
 
   defaultTaffybar defaultTaffybarConfig
-                  { barHeight = 16
+                  { barHeight = 18
                   , startWidgets = [ pager, note ]
                   , endWidgets = [ tray, clock
                                  , bat

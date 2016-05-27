@@ -5,3 +5,7 @@ then
     echo "ERROR: refiler was not happy"
 fi
 
+NEW=$(notmuch count tag:new)
+SUB=$(notmuch search --format=json tag:new | jq -j '.[0:3]|.[]|.subject+", "')
+notmuch tag -new tag:new
+notify-send "$NEW new mails" "$SUB"
