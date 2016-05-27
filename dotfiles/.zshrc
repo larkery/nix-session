@@ -169,7 +169,7 @@ vbe-insert-bookmark() {
     }
 
 zle -N vbe-insert-bookmark
-bindkey '^[#' vbe-insert-bookmark
+bindkey '^[	' vbe-insert-bookmark
 
 # directory memory
 autoload -Uz chpwd_recent_dirs cdr
