@@ -142,6 +142,7 @@ main = xmonad $
       ("M-a l", spawn "systemctl suspend"),
       ("M-a m", spawn "xdg-open mailto:"),
       ("M-a M-m", spawn "notmuch new"),
+      ("M-a s", spawn "xterm"),
 
       ("M-h", XPW.windowPromptBring prompt),
       ("M-j", XPW.windowPromptGoto  prompt),
@@ -153,14 +154,15 @@ main = xmonad $
       ("M-m", windows $ W.shift "min"),
       ("M-S-m", bringFromMin),
 
-      ("M-o", focusUp),
-      ("M-p", focusDown),
+      ("M-p", focusUp),
+      --("M-o", focusDown),
+      ("M-n", focusDown),
       
       ("M-,", rotSlavesUp),
       ("M-.", rotSlavesDown),
       
       ("M-S-p", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
-      ("M-S-o", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
+      ("M-S-n", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
       
       ("M-c M-c",   withFocused $ \w -> sendMessage $ VC.ToNewColumn w),      
       ("M-c c", withFocused $ \w -> sendMessage $ VC.GrabColumn w),

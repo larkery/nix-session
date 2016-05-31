@@ -292,7 +292,7 @@ instance LayoutClass LS Window where
         let addr = (max minimumSize) . (+ r)
             change s a = norm $ S.adjust addr s a
         in
-        findWindowAnd w $ \(row, col, _) ->
+        findWindowAnd w $ \(col, row, _) ->
                             return $ Just $ state
                                { cols = (Cols
                                          (change col rs)
