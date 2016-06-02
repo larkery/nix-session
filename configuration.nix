@@ -64,6 +64,7 @@
   };
 
   services = {
+    upower.enable = true;
     nscd.enable = false;
     acpid.enable = true;
     tlp.enable = true;
@@ -77,14 +78,19 @@
          twoFingerScroll = true;
        };
        xkbOptions = "ctrl:nocaps";
-       windowManager.i3.enable = true;
+       #windowManager.i3.enable = true;
+       windowManager.xmonad = {
+           enable = true;
+           enableContribAndExtras = true;
+           extraPackages = p : [p.taffybar];
+       };
        displayManager.lightdm.enable = true;
     };
 
     autofs = {
       enable = true;
       timeout = 300;
-
+      debug = true;
       autoMaster =
       let
         share = pkgs.writeScript "auto-share" ''
@@ -119,8 +125,33 @@
     isNormalUser = true;
     uid = 1000;
   };
+  
+  fonts = {
+    fonts = with pkgs; [
+      inconsolata
+      ubuntu_font_family
+      font-droid
+      dejavu_fonts
+      source-sans-pro
+      source-serif-pro
+      fira
+      fira-code
+      fira-mono
+    ];
 
-  fonts.fontconfig.hinting.style = "slight";
+    fontconfig.includeUserConf = true;
+
+    fontconfig.hinting = {
+        autohint = false;
+        enable = true;
+        style = "slight";
+      };
+
+    fontconfig.defaultFonts = {
+      monospace = [ "Inconsolata" "DejaVu Sans Mono" ];
+      sansSerif = [ "Ubuntu" ];
+    };
+  };
     # The NixOS release to be compatible with for stateful data such as databases.
   system.stateVersion = "16.03";
 }
