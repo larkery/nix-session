@@ -161,8 +161,8 @@ main = xmonad $
       ("M-,", rotSlavesUp),
       ("M-.", rotSlavesDown),
       
-      ("M-S-p", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
-      ("M-S-n", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
+      ("M-S-n", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
+      ("M-S-p", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
       
       ("M-c M-c",   withFocused $ \w -> sendMessage $ VC.ToNewColumn w),      
       ("M-c c", withFocused $ \w -> sendMessage $ VC.GrabColumn w),

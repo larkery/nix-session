@@ -14,3 +14,4 @@ taffybar &
 # emacsclient --eval '(kill-emacs)'
 # gpg-connect-agent killagent /bye
 # pulseaudio --kill
+export _JAVA_AWT_WM_NONREPARENTING=1
