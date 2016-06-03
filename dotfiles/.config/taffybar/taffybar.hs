@@ -4,7 +4,6 @@ import System.Taffybar.Pager
 import System.Taffybar.TaffyPager
 import System.Taffybar.Systray
 import System.Taffybar.SimpleClock
-import System.Taffybar.FreedesktopNotifications
 import System.Taffybar.Weather
 
 import System.Taffybar.Widgets.PollingBar
@@ -72,8 +71,6 @@ main = do
                                   }
       clockCfg = "<span fgcolor='white'>%a %b %_d %H:%M</span>"
   let clock = textClockNew Nothing clockCfg 1
-      note  = notifyAreaNew defaultNotificationConfig
-      
       bat = pollingBarNew defaultBatteryConfig 10 battsum
 
       cpu   = pollingGraphNew cpuCfg 2 cpuCallback
@@ -91,7 +88,7 @@ main = do
 
   defaultTaffybar defaultTaffybarConfig
                   { barHeight = 18
-                  , startWidgets = [ pager, note ]
+                  , startWidgets = [ pager ]
                   , endWidgets = [ tray, clock
                                  , bat
                                  , cpu, nm

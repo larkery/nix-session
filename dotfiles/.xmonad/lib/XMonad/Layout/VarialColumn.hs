@@ -369,8 +369,6 @@ dragHandler (WindowDragger y0 d c r) =
   \_ y -> sendMessage $ -- DT.traceShow (y0, y, d, c, r) $
           SetRow c r ((fromIntegral (y - y0) :: Integer) % (fromIntegral d :: Integer))
 
-dragHandler _ = return ()
-
 handleResize :: Event -> [WDragger] -> X ()
 handleResize ButtonEvent { ev_window = ew, ev_event_type = et } draggers
   | et == buttonPress, Just x <- lookup ew draggers = dragHandler x
