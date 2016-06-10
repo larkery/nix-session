@@ -52,7 +52,7 @@ other_email=t@larkery.com;
 #
 
 [new]
-tags=inbox new
+tags=inbox;new
 ignore=
 
 # Search configuration
