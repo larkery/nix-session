@@ -32,6 +32,7 @@ data LS a = LS
 
             balanceColumns :: Int,
             insertColumns :: Int,
+            firstColumnLimit :: Int,
 
             draggers :: [WDragger],
 
@@ -45,11 +46,12 @@ data Dragger = WindowDragger Position Dimension Int Int |
 type WDragger = (Window, Dragger)
 
 varial = LS { cols = (Cols S.empty S.empty),
-              gap = 1,
+              gap = 5,
               balanceColumns = 1,
               insertColumns = 2,
               draggers = [],
-              lastContent = []
+              lastContent = [],
+              firstColumnLimit = 1
               }
 
 ins :: S.Seq a -> Int -> S.Seq a -> S.Seq a
@@ -101,6 +103,7 @@ insertCol n s@(LS {cols = (Cols rs cs)}) = s { cols = cols' }
   where cols' = Cols (ins1 n rs) (insc n cs)
 
 -- insert a new row in column c at existing row n
+-- however, if that would make column 1 too big, insert it into the next smallest column
 insertRow :: Int -> Int -> LS a -> LS a
 insertRow c r s@(LS {cols = (Cols rs cs)}) = s { cols = cols' }
   where cols' = Cols rs $ S.adjust (\x -> ins1 r x) c cs
@@ -152,10 +155,6 @@ update
            insertColumns = ic })
   stack@(W.Stack f u d)
   | newCount < oldCount =
-    -- windows deleted. delete windows that are before the focused window;
-    -- there is an issue here if there are not enough windows before the focused window.
---    D.traceShow
---    ("windows closed", oldCount-newCount, delFromC, delFromR) $
     Just $ balance $ times (oldCount - newCount) (deleteRow delFromC delFromR) ls 
   | (newCount > oldCount) && (ic > numColumns) = -- windows added, stick them all in a column and balance
     Just $ balance $ times (newCount - oldCount - 1) (insertRow focusCol 0) $ insertCol focusCol ls
@@ -172,7 +171,7 @@ update
 
 findWindow :: Int -> S.Seq Col -> Maybe (Int, Int)
 findWindow n cs
-  | n >= length coordinates = D.traceShow (coordinates, n) Nothing
+  | n >= length coordinates = Nothing
   | otherwise = Just $ coordinates !! n
   where coordinates = [(col, row) | (col, rows) <- zip [0..] (F.toList cs),
                                     row <- take (S.length rows) [0..]]
@@ -213,10 +212,11 @@ cutup ax g screen slices
     sub :: Rectangle -> (Rational, Rational) -> Rectangle 
     sub (Rectangle x y w h) (l, r) = Rectangle x y' w h'
       where
+        g' = if l > 0 then g else 0
         h' :: Dimension
-        h' = floor $ ((fromIntegral h) * (r - l)) - (fromIntegral g)
+        h' = (floor ((fromIntegral h) * (r - l))) - (fromIntegral g')
         y' :: Position
-        y' = floor $ ((fromIntegral y) + (fromIntegral h) * l) + (if l > 0 then (fromIntegral g) else 0)
+        y' = (floor  ((fromIntegral y) + (fromIntegral h) * l)) + (fromIntegral g')
         
 -- the instances which do the stuff in the X monad
 
@@ -353,7 +353,7 @@ instance LayoutClass LS Window where
 
           grab :: Int -> S.Seq Rational -> S.Seq Rational
           grab n s = let k = S.length s
-                         small = minimumSize * 2 in
+                         small = minimumSize * 1.5 in
                        S.update n ((1%1) - (fromIntegral k) * small) $
                        S.fromList $
                        replicate k small
@@ -384,7 +384,7 @@ addDraggers (Rectangle sx sy sw sh) ws state@(LS { cols = (Cols rs cs) }) =
   -- chop ws into piles
   -- each pile except the last produces a dragger for its right hand side
   -- each window in a pile except the last produces a dragger for its lower edge
-  let g = (fromIntegral $ 2 * (gap state)) :: Dimension
+  let g = (fromIntegral $ (gap state)) :: Dimension
 
       windowColumns = zip [0..] $ splitPlaces ws $ map S.length $ F.toList cs
       

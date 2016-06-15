@@ -58,7 +58,7 @@ WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
 
 # prompt garble
 
-PROMPTSYM=":"
+PROMPTSYM="$"
 PROMPT="%F{blue}%~%f\${vcs_info_msg_0_}
 %B%(?,,%F{red})$PROMPTSYM%f%b "
 
@@ -116,6 +116,8 @@ bindkey "^X^E" edit-command-line
 alias ls='ls -h --color'
 alias l='ls -l'
 alias la='l -a'
+alias add='paste -s -d+|bc'
+alias tab='cut -d "	" -f '
 
 o() {
     xdg-open "$@" &|

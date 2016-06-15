@@ -23,6 +23,9 @@ import qualified XMonad.Prompt.Window as XPW
 import qualified XMonad.Actions.CycleRecentWS as Recent
 import qualified XMonad.Layout.BoringWindows as Boring
 
+import XMonad.Hooks.EwmhDesktops (fullscreenEventHook)
+import XMonad.Hooks.Place
+import XMonad.Hooks.ManageHelpers
 import XMonad.Actions.RotSlaves
 
 import XMonad.Actions.WindowBringer (bringWindow) 
@@ -113,7 +116,24 @@ focusDown = inLayout
   [("f", windows W.focusDown)]
   Boring.focusDown
 
+manageHooks config = config {
+  manageHook = (manageHook config) <+>
+               placeHook (withGaps (16,16,16,16) (underMouse (0.5, 0.2))) <+>
+               composeAll
+               [
+                 isDialog --> doFloat,
+                 isFullscreen --> doFullFloat
+               ]
+  }
+
+eventHooks config = config {
+  handleEventHook = (handleEventHook config) <+>
+                    fullscreenEventHook
+  }
+
 main = xmonad $
+  manageHooks $
+  eventHooks $
   pagerHints $
   desktopConfig
     { modMask     = mod4Mask

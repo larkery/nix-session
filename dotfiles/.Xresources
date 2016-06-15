@@ -1,7 +1,7 @@
 #define FONT Monospace-10.5
 
-#define LBGCOL #F0F0F0
-#define LFGCOL #252525
+#define LBGCOL white
+#define LFGCOL grey20
 
 #define DBGCOL #161616
 #define DFGCOL #C2C2C2
