@@ -156,6 +156,7 @@ main = xmonad $
 
       ("M-a e", spawn "emacsclient -c -n"),
       ("M-a w", spawn "vimb"),
+      ("M-a q", spawn "qb"),
       ("M-a d", spawn "dmenu_run"),
       ("M-a M-a", XPS.shellPrompt prompt),
       ("M-a h", spawn "systemctl hibernate"),
@@ -175,7 +176,6 @@ main = xmonad $
       ("M-S-m", bringFromMin),
 
       ("M-p", focusUp),
-      --("M-o", focusDown),
       ("M-n", focusDown),
       
       ("M-,", rotSlavesUp),
@@ -188,10 +188,12 @@ main = xmonad $
       ("M-c c", withFocused $ \w -> sendMessage $ VC.GrabColumn w),
       ("M-c h", withFocused $ \w -> sendMessage $ VC.GrabRow w),
       ("M-c e", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 1 w),
-      ("M-c q", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 0.5 w),
+       ("M-c q", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 0.5 w),
 
-      ("M-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0.1 w),
-      ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-0.1 :: Rational) w)
+       ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen 0.3 0 w),
+       ("M-S-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-0.3 :: Rational) 0 w),
+       ("M-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 0.3 w),
+       ("M-S-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 (-0.3 :: Rational) w)
      ]
      ++
      [ ("M-" ++ k, ((sendMessage $ JumpToLayout k))) | k <- ["s","d","f"] ]

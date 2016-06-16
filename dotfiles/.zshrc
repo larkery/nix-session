@@ -1,6 +1,9 @@
 # nixos terminal login does not do this
 # for reasons which escape me.
-[[ -z $SOURCED_PROFILE ]] && source $HOME/.profile
+if [[ -z $SOURCED_PROFILE ]]; then
+    echo "sourcing profile..."
+    source $HOME/.profile
+fi
 
 # include path
 ZSH=~/.zsh
@@ -13,13 +16,21 @@ unsetopt notify
 
 autoload -U zutil
 
-autoload compinit && {
-    autoload -U complist
-    compinit
-}
+autoload compinit 
+autoload -U complist
+compinit
+
+autoload -U colors && colors
 
 # completion settings
-zstyle ':completion:*' completer _expand _complete _ignored _correct _approximate _match
+zstyle -e ':completion:*' completer '
+  if [[ $_last_try != "$HISTNO$BUFFER$CURSOR" ]]; then
+    _last_try="$HISTNO$BUFFER$CURSOR"
+    reply=(_complete _match _prefix)
+  else
+    reply=(_ignored _correct _approximate)
+  fi'
+
 zstyle ':completion:*' max-errors 1
 zstyle ':completion:*' file-sort name
 zstyle ':completion:*' group-name ''
@@ -50,8 +61,6 @@ HISTSIZE=10000
 SAVEHIST=10000
 (( $+widgets[history-incremental-pattern-search-backward] )) &&	\
     bindkey '^r' history-incremental-pattern-search-backward
-
-autoload -U colors && colors
 
 # prevent deleting entire paths
 WORDCHARS='*?_-.[]~=&;!#$%^(){}<>'
@@ -88,7 +97,6 @@ case $TERM in
         _title_preexec() {
             _STARTED=$(date +%s)
             printf "\033];%s\07" "$1"
-
         }
 
         _timer_precmd() {
@@ -129,55 +137,30 @@ alias -s jpg=o
 alias -s png=o
 
 # bookmarks
+# this is bad, because it touches the filesystem
+# triggering autofs mounts all over the shop.
+# I would rather something like chpwd/cdr
 MARKPATH=$ZSH/run/marks
 for link ($MARKPATH/*(N@)) {
-        hash -d -- -${link:t}=${link:A}
-    }
-
-bookmark() {
-        [[ -d $MARKPATH ]] || mkdir -p $MARKPATH
-        if (( $# == 0 )); then
-            # When no arguments are provided, just display existing
-            # bookmarks
-            for link in $MARKPATH/*(N@); do
-                local markname="$fg[green]${link:t}$reset_color"
-                local markpath="$fg[blue]${link:A}$reset_color"
-                printf "%-30s -> %s\n" $markname $markpath
-            done
-        else
-            # Otherwise, we may want to add a bookmark or delete an
-            # existing one.
-            local -a delete
-            zparseopts -D d=delete
-            if (( $+delete[1] )); then
-                # With `-d`, we delete an existing bookmark
-                command rm $MARKPATH/$1
-            else
-                # Otherwise, add a bookmark to the current
-                # directory. The first argument is the bookmark
-                # name. `.` is special and means the bookmark should
-                # be named after the current directory.
-                local name=$1
-                [[ $name == "." ]] && name=${PWD:t}
-                ln -s $PWD $MARKPATH/$name
-                hash -d -- -${name}=${PWD}
-            fi
-        fi
-    }
+    hash -d -- -${link:t}=${link:A}
+}
 
 vbe-insert-bookmark() {
-        emulate -L zsh
-        LBUFFER=${LBUFFER}"~-"
-    }
+   emulate -L zsh
+   LBUFFER=${LBUFFER}"~-"
+   zle expand-or-complete-prefix
+}
 
 zle -N vbe-insert-bookmark
-bindkey '^[	' vbe-insert-bookmark
+bindkey '^[i' vbe-insert-bookmark
 
 # directory memory
 autoload -Uz chpwd_recent_dirs cdr
 add-zsh-hook chpwd chpwd_recent_dirs
 
-zstyle ':chpwd:*' recent-dirs-default true
+zstyle ':chpwd:*' recent-dirs-default yes
+zstyle ':chpwd:*' recent-dirs-max 50
+zstyle ':completion:*' recent-dirs-insert always
 
 rationalise-dot() {
   if [[ $LBUFFER = *.. ]]; then
@@ -186,22 +169,9 @@ rationalise-dot() {
     LBUFFER+=.
   fi
 }
+
 zle -N rationalise-dot
 bindkey . rationalise-dot
-
-autoload -Uz narrow-to-region
-_history-incremental-pattern-search-backward-with-buffer() {
-    local state
-    endcommand="${BUFFER[(I);]}"
-    if [[ $endcommand -gt 0 ]]; then
-        MARK=$endcommand
-        narrow-to-region -S state
-    fi
-    zle history-incremental-pattern-search-backward -- ${${BUFFER## }%% }
-    if [[ $endcommand -gt 0 ]]; then
-        narrow-to-region -R state
-    fi
-}
 
 zle -N _history-incremental-pattern-search-backward-with-buffer
 bindkey '^R' _history-incremental-pattern-search-backward-with-buffer
@@ -226,28 +196,8 @@ bindkey -M isearch "\eOB" history-incremental-search-forward
 DIRSTACKSIZE=8
 setopt autopushd pushdminus pushdsilent pushdtohome
 
-mnt() {
-    [ ! -d /run/media/hinton/"$1" ] && \
-        udisksctl mount --block-device /dev/disk/by-label/"$1"
-    cd /run/media/hinton/"$1"
-}
-
-compdef '_files -W /dev/disk/by-label' mnt
-
 # either run a command or run ls if nothing there
 
-_accept_or_ls () {
-    if [[ -z $BUFFER ]]
-    then
-        echo
-        l
-        echo
-        precmd
-        zle reset-prompt
-    else
-        zle accept-line
-    fi
-}
 
 zle -N _accept_or_ls
 
@@ -265,3 +215,17 @@ eval $(dircolors -b $HOME/session/dircolors.ansi-light)
 autoload -Uz copy-earlier-word
 zle -N copy-earlier-word
 bindkey "^[m" copy-earlier-word
+
+_my_cd () {
+    _cd
+    _my_files
+}
+
+compdef '_my_cd' cd
+
+_my_cp () {
+    _cp
+    _my_files
+}
+
+compdef '_my_cp' cp

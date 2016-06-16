@@ -236,7 +236,7 @@ data Msg =
   GrabRow Window |
   GrabColumn Window |
   EqualizeColumn Rational Window |
-  Embiggen Rational Window
+  Embiggen Rational Rational Window
 
   deriving (Read, Show, Typeable)
 
@@ -288,15 +288,15 @@ instance LayoutClass LS Window where
                                                                        take (S.length $ S.index cs col) $
                                                                        iterate (* gen) 1)
                                                                       cs)))}
-    | (Just (Embiggen r w)) <- fromMessage msg =
-        let addr = (max minimumSize) . (+ r)
-            change s a = norm $ S.adjust addr s a
+    | (Just (Embiggen dr dc w)) <- fromMessage msg =
+        let add q = (max minimumSize) . (+ q)
+            change q s a = norm $ S.adjust (add q) s a
         in
         findWindowAnd w $ \(col, row, _) ->
                             return $ Just $ state
                                { cols = (Cols
-                                         (change col rs)
-                                         (S.adjust (change row) col cs)) }
+                                         (change dr col rs)
+                                         (S.adjust (change dc row) col cs)) }
     
                                   
     | (Just (SetColumn c r)) <- fromMessage msg =

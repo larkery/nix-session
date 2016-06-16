@@ -35,9 +35,9 @@
        networkmanagerapplet
        notmuch
        nox
-       numix-gtk-theme
-       numix-icon-theme
        gnome.gnome_icon_theme
+       arc-gtk-theme
+       numix-icon-theme
        openjdk
        openssl
        pa_applet
