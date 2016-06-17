@@ -136,14 +136,8 @@ alias -s pdf=o
 alias -s jpg=o
 alias -s png=o
 
-# bookmarks
-# this is bad, because it touches the filesystem
-# triggering autofs mounts all over the shop.
-# I would rather something like chpwd/cdr
 MARKPATH=$ZSH/run/marks
-for link ($MARKPATH/*(N@)) {
-    hash -d -- -${link:t}=${link:A}
-}
+bookmark -l
 
 vbe-insert-bookmark() {
    emulate -L zsh

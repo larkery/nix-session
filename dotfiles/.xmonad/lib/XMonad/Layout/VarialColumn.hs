@@ -53,7 +53,7 @@ varial = LS { cols = (Cols S.empty S.empty),
               lastContent = [],
               firstColumnLimit = 1
               }
-
+         
 ins :: S.Seq a -> Int -> S.Seq a -> S.Seq a
 ins a n s = ((S.take n s) >< a) >< (S.drop n s)
 

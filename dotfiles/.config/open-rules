@@ -9,7 +9,7 @@ exec emacsclient -c -e "(browse-url-mail \"$1\")"
 scheme http
 scheme https
 mime text/html
-exec vimb "$1"
+exec qb "$1"
 mime image/.+
 exec feh "$1"
 test [ -d "$1/.git" ]

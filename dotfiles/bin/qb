@@ -1,0 +1,9 @@
+#!/bin/sh
+
+SOCKET=/run/user/1000/qutebrowser/ipc-816caac2ef4a94bea2a2d6fb0cdfd54f
+
+if [ -S $SOCKET ]; then
+    echo '{"args":["'$@'"], "target_arg":"", "protocol_version":1}' | socat - UNIX-CONNECT:$SOCKET
+else
+    exec qutebrowser "$@"
+fi
