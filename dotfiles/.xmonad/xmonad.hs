@@ -190,10 +190,10 @@ main = xmonad $
       ("M-c e", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 1 w),
        ("M-c q", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 0.5 w),
 
-       ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen 0.3 0 w),
-       ("M-S-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-0.3 :: Rational) 0 w),
-       ("M-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 0.3 w),
-       ("M-S-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 (-0.3 :: Rational) w)
+       ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen deltaw 0 w),
+       ("M-S-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-deltaw) 0 w),
+       ("M-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 deltah w),
+       ("M-S-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 (-deltah) w)
      ]
      ++
      [ ("M-" ++ k, ((sendMessage $ JumpToLayout k))) | k <- ["s","d","f"] ]
@@ -208,7 +208,11 @@ main = xmonad $
                            ("M-S-", DW.withNthWorkspace W.shift)],
        (number, key) <- zip [0..] ["q","w","e","r"]]
     )
-
+  where
+    deltaw :: Rational
+    deltaw = 0.2
+    deltah :: Rational
+    deltah = 0.2
 
 prompt = XP.defaultXPConfig
    { XP.font = "xft:Sans:pixelsize=14"

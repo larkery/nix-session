@@ -69,7 +69,7 @@ norm :: S.Seq Rational -> S.Seq Rational
 norm s = fmap scale s
   where
     scale :: Rational -> Rational
-    scale x = x / sum
+    scale x = (max 0.05 (x / sum))
     sum = F.sum s
 
 del n s = (S.take n s) >< (S.drop (1 + n) s)
@@ -289,8 +289,7 @@ instance LayoutClass LS Window where
                                                                        iterate (* gen) 1)
                                                                       cs)))}
     | (Just (Embiggen dr dc w)) <- fromMessage msg =
-        let add q = (max minimumSize) . (+ q)
-            change q s a = norm $ S.adjust (add q) s a
+        let change q s a = norm $ S.adjust (+ q) s $ fmap ((flip (-)) (q / (fromIntegral $ S.length a))) a
         in
         findWindowAnd w $ \(col, row, _) ->
                             return $ Just $ state
