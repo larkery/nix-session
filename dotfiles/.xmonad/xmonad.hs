@@ -143,6 +143,11 @@ main = xmonad $
     , focusedBorderColor = "#00bfff"
     , borderWidth = 2
     }
+    `additionalMouseBindings`
+    -- this is mod scrollwheel
+    [((mod4Mask, button4), (const $ spawn "xdotool key --clearmodifiers XF86AudioLowerVolume")),
+     ((mod4Mask, button5), (const $ spawn "xdotool key --clearmodifiers XF86AudioRaiseVolume"))
+    ]
     `removeKeysP`
     [p ++ [n] | p <- ["M-", "M-S-"], n <- ['1'..'9']]
     `additionalKeysP`
