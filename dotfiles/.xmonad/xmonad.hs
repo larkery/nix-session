@@ -169,7 +169,9 @@ main = xmonad $
     `additionalMouseBindings`
     -- this is mod scrollwheel
     [((0, 9), handleScrollButton 4),
-     ((0, 10), handleScrollButton 5)
+      ((0, 10), handleScrollButton 5),
+      ((mod4Mask, 9), const $ spawn "xdotool key --clearmodifiers XF86AudioLowerVolume"),
+      ((mod4Mask, 10), const $ spawn "xdotool key --clearmodifiers XF86AudioRaiseVolume")
     ]
     `removeKeysP`
     [p ++ [n] | p <- ["M-", "M-S-"], n <- ['1'..'9']]
