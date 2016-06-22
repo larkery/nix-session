@@ -62,10 +62,10 @@ handleScrollButton simbutton window = do
   (ScrollEvents last times) <- XS.get
   -- now we want to produce a rate
   now <- io getPOSIXTime
-  let times' = now:(filter (\x -> now - x < 3.0) times)
-  let rate = (fromIntegral $ length times') / 3.0
+  let times' = now:(filter (\x -> now - x < 0.8) times)
+  let rate = (fromIntegral $ length times')
   -- now we want to generate some number of scroll events, based on some kind of acceleration function
-  let n = 1 + if simbutton == last then (floor (rate / 3.0)) else 0
+  let n = 1 + if simbutton == last then (floor ((rate/2.0) ** 1.25)) else 0
   spawn $ "xdotool click " ++ " --delay 2 --repeat " ++ (show n) ++
     --" --window " ++ (show window) ++
 
@@ -168,7 +168,8 @@ main = xmonad $
     }
     `additionalMouseBindings`
     -- this is mod scrollwheel
-    [((0, 9), handleScrollButton 4),
+    [
+      ((0, 9), handleScrollButton 4),
       ((0, 10), handleScrollButton 5),
       ((mod4Mask, 9), const $ spawn "xdotool key --clearmodifiers XF86AudioLowerVolume"),
       ((mod4Mask, 10), const $ spawn "xdotool key --clearmodifiers XF86AudioRaiseVolume")
