@@ -31,7 +31,7 @@ memCallback = do
 
 cpuCallback = do
   (userLoad, systemLoad, totalLoad) <- cpuLoad
-  return [totalLoad, systemLoad] 
+  return [totalLoad, systemLoad]
 
 
 readBatt = do
@@ -50,15 +50,15 @@ battStat m =
              now <- M.lookup "POWER_SUPPLY_ENERGY_NOW" m
              current <- M.lookup "POWER_SUPPLY_POWER_NOW" m
              return $ (read now :: Integer, read full :: Integer, read current :: Integer)
-  in a <|> b 
+  in a <|> b
 
 battsum :: IO Double
 battsum = do
   dat <- readBatt
   return $ fromMaybe 0 $ do (n, f, r) <- battStat dat
-                            let per =  (n % f) 
+                            let per =  (n % f)
                             return $ fromRational per
-              
+
 
 main = do
   let memCfg = defaultGraphConfig { graphDataColors = [(1, 0, 0, 1)]
@@ -81,7 +81,7 @@ main = do
               {
                 activeWindow = escape
               , activeWorkspace  = colorize "black" "white" . wrap " " " " . escape
-              , visibleWorkspace = colorize "black" "orange" . wrap " " " " . escape
+              , visibleWorkspace = colorize "white" "gray" . wrap " " " " . escape
               , hiddenWorkspace = colorize "white" "" . wrap " " " " . escape
               , urgentWorkspace = colorize "white" "red" . wrap " " " " . escape
               }

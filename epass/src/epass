@@ -25,6 +25,19 @@ choose() {
     fi
 }
 
+ask() {
+    X=$(echo -e "yes\nno" | dmenu -p "$1")
+    if [ "$X" = "yes" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+copyonce() {
+    echo "$1" | xclip -l 1 -quiet
+}
+
 case $1 in
     type)
         case $2 in
@@ -99,7 +112,18 @@ case $1 in
             esac
         done
         ;;
-    *)
+    -h)
         echo "list | type [user | password | both] | visit | echo password [key value]*"
+        ;;
+    *)
+        DATA=$(choose "$(load .)" "select")
+        URL=$(echo "$DATA" | $JQ -r .URL)
+        [ ! -z "$URL" ] && ask "visit $URL?" && xdg-open "$URL" &
+
+        USER=$(echo "$DATA" | $JQ -r .USERNAME)
+        [ ! -z "$USER" ] && ask "copy username?" && copyonce "$USER"
+
+        PASS=$(echo "$DATA" | $JQ -r .PASSWORD)
+        [ ! -z "$USER" ] && ask "copy password?" && copyonce "$PASS"
         ;;
 esac

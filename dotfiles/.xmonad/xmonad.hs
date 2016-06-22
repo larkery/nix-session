@@ -28,7 +28,7 @@ import XMonad.Hooks.Place
 import XMonad.Hooks.ManageHelpers
 import XMonad.Actions.RotSlaves
 
-import XMonad.Actions.WindowBringer (bringWindow) 
+import XMonad.Actions.WindowBringer (bringWindow)
 
 import XMonad.Util.EZConfig
 import Data.List (isInfixOf, (\\))
@@ -49,6 +49,29 @@ import XMonad.Layout.ShowWName
 import Data.Maybe (fromMaybe)
 import qualified XMonad.Actions.CycleWS as C
 
+import qualified XMonad.Util.ExtensibleState as XS
+import Data.Time.Clock.POSIX (getPOSIXTime, POSIXTime)
+import qualified Debug.Trace as DT
+
+-- the last series of scroll events
+data ScrollEvents = ScrollEvents Int [POSIXTime] deriving Typeable
+instance ExtensionClass ScrollEvents where
+  initialValue = ScrollEvents 0 []
+
+handleScrollButton simbutton window = do
+  (ScrollEvents last times) <- XS.get
+  -- now we want to produce a rate
+  now <- io getPOSIXTime
+  let times' = now:(filter (\x -> now - x < 3.0) times)
+  let rate = (fromIntegral $ length times') / 3.0
+  -- now we want to generate some number of scroll events, based on some kind of acceleration function
+  let n = 1 + if simbutton == last then (floor (rate / 3.0)) else 0
+  spawn $ "xdotool click " ++ " --delay 2 --repeat " ++ (show n) ++
+    --" --window " ++ (show window) ++
+
+    " " ++ (show simbutton)
+  XS.put (ScrollEvents simbutton times')
+
 as n x = Ren.renamed [Ren.Replace n] x
 
 data AddCount a = AddCount Int Int deriving (Show, Read)
@@ -65,7 +88,7 @@ instance LayoutModifier AddCount a where
 
 addCount = ModifiedLayout ((AddCount 0 0) :: AddCount Window)
 
-layout = -- showWName' defaultSWNConfig 
+layout = -- showWName' defaultSWNConfig
          -- {
          --   swn_font = "xft:Sans:pixelsize=32"
          -- , swn_bgcolor = "orange"
@@ -89,7 +112,7 @@ cycleRecentPopulated = Recent.cycleWindowSets candidates
 
 bringFromMin = windows bringHeadOfMin
   where bringHeadOfMin :: WindowSet -> WindowSet
-        bringHeadOfMin ws = 
+        bringHeadOfMin ws =
           let minSpaces = filter ((== "min") . W.tag) $ W.workspaces ws
               firstMin :: Maybe Window
               firstMin =
@@ -106,7 +129,7 @@ inLayout :: [(String, X ())] -> X () -> X ()
 inLayout as d =
   do lname <- gets (description . W.layout . W.workspace . W.current . windowset)
      let lname' = head $ words lname
-     fromMaybe d $ lookup lname' as 
+     fromMaybe d $ lookup lname' as
 
 focusUp = inLayout
   [("f", windows W.focusUp)]
@@ -143,13 +166,20 @@ main = xmonad $
     , focusedBorderColor = "#00bfff"
     , borderWidth = 2
     }
+    `additionalMouseBindings`
+    -- this is mod scrollwheel
+    [((0, 9), handleScrollButton 4),
+      ((0, 10), handleScrollButton 5),
+      ((mod4Mask, 9), const $ spawn "xdotool key --clearmodifiers XF86AudioLowerVolume"),
+      ((mod4Mask, 10), const $ spawn "xdotool key --clearmodifiers XF86AudioRaiseVolume")
+    ]
     `removeKeysP`
     [p ++ [n] | p <- ["M-", "M-S-"], n <- ['1'..'9']]
     `additionalKeysP`
     ([("M-<Escape>", spawn "xmonad --recompile; xmonad --restart"),
       ("M-S-<Escape>", io (exitWith ExitSuccess)),
       ("M-<Return>", DWM.dwmpromote),
-      
+
       ("M-l", C.moveTo C.Prev C.NonEmptyWS),
       ("M-;", C.moveTo C.Next C.NonEmptyWS),
       ("M-y", tagToEmptyWorkspace),
@@ -171,20 +201,20 @@ main = xmonad $
 
       ("M-<Tab>", focusDown),
       ("M-S-<Tab>", focusUp),
-      
+
       ("M-m", windows $ W.shift "min"),
       ("M-S-m", bringFromMin),
 
       ("M-p", focusUp),
       ("M-n", focusDown),
-      
+
       ("M-,", rotSlavesUp),
       ("M-.", rotSlavesDown),
-      
+
       ("M-S-n", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
       ("M-S-p", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
-      
-      ("M-c M-c",   withFocused $ \w -> sendMessage $ VC.ToNewColumn w),      
+
+      ("M-c M-c",   withFocused $ \w -> sendMessage $ VC.ToNewColumn w),
       ("M-c c", withFocused $ \w -> sendMessage $ VC.GrabColumn w),
       ("M-c h", withFocused $ \w -> sendMessage $ VC.GrabRow w),
       ("M-c e", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 1 w),
