@@ -55,13 +55,16 @@ import qualified Debug.Trace as DT
 
 import qualified Graphics.X11.XTest as XTest
 import Control.Concurrent (threadDelay)
+import XMonad.Actions.Warp (warpToWindow)
+import Data.Monoid--All
+import Data.Bits ( testBit )
 
 -- the last series of scroll events
 data ScrollEvents = ScrollEvents Button [POSIXTime] deriving Typeable
 instance ExtensionClass ScrollEvents where
   initialValue = ScrollEvents 0 []
 
-accelerate simbutton window = do
+accelerate simbutton = do
   (ScrollEvents last times) <- XS.get
   -- now we want to produce a rate
   now <- io getPOSIXTime
@@ -69,9 +72,10 @@ accelerate simbutton window = do
   let rate = (fromIntegral $ length times')
   -- now we want to generate some number of scroll events, based on some kind of acceleration function
   let n = 1 + if simbutton == last then (floor ((rate/2.0) ** 1.25)) else 0
-  withDisplay $ \d ->
-    VC.timesX n $
-    io $ XTest.fakeButtonPress d simbutton >> threadDelay 5
+  DT.traceShow (n, "button simulations") $
+    withDisplay $ \d ->
+                    VC.timesX n $
+                    io $ XTest.fakeButtonPress d simbutton >> threadDelay 5
   XS.put (ScrollEvents simbutton times')
 
 as n x = Ren.renamed [Ren.Replace n] x
@@ -156,6 +160,25 @@ eventHooks config = config {
                     fullscreenEventHook
   }
 
+
+-- unfortunately this is not workable, because the hook is not triggered when a button is held down
+-- horizontalScrollSimulationHook :: Event -> X All
+-- horizontalScrollSimulationHook (ButtonEvent {ev_button = b, ev_state = st}) =
+--   -- | (b == 9 || b == 10) && (testBit st 16) = do
+--     --  accelerate (b - 3)
+--       return $ DT.traceShow (b, st) $ All True
+-- --  | otherwise = return $ All True
+-- horizontalScrollSimulationHook _ = return $ All True
+
+-- unfortunately this will not produce fake modifier release
+--sendKey k =
+--  withDisplay $ \d -> io $ XTest.sendKey d [] k
+
+bscrollup = 4
+bscrolldown = 5
+bccw = 9
+bcw = 10
+
 main = xmonad $
   manageHooks $
   eventHooks $
@@ -171,10 +194,10 @@ main = xmonad $
     `additionalMouseBindings`
     -- this is mod scrollwheel
     [
-      ((0, 9), accelerate 4),
-      ((0, 10), accelerate 5),
-      ((mod4Mask, 9), const $ spawn "xdotool key --clearmodifiers XF86AudioLowerVolume"),
-      ((mod4Mask, 10), const $ spawn "xdotool key --clearmodifiers XF86AudioRaiseVolume")
+      ((0, bcw),  const $ accelerate bscrolldown),
+      ((0, bccw), const $ accelerate bscrollup),
+      ((mod4Mask, bcw), const $ spawn "xdotool key --clearmodifiers XF86AudioRaiseVolume"),
+      ((mod4Mask, bccw), const $ spawn "xdotool key --clearmodifiers XF86AudioLowerVolume")
     ]
     `removeKeysP`
     [p ++ [n] | p <- ["M-", "M-S-"], n <- ['1'..'9']]
@@ -202,6 +225,9 @@ main = xmonad $
       ("M-j", XPW.windowPromptGoto  prompt),
       ("M-k", kill),
 
+      ("M-v '", DW.renameWorkspace prompt),
+      ("M-v =", DW.addWorkspacePrompt prompt),
+
       ("M-<Tab>", focusDown),
       ("M-S-<Tab>", focusUp),
 
@@ -213,6 +239,10 @@ main = xmonad $
 
       ("M-,", rotSlavesUp),
       ("M-.", rotSlavesDown),
+
+      ("M--", C.nextScreen >> warpToWindow 0.1 0.1),
+      ("M-S--", C.shiftNextScreen >> C.nextScreen >> warpToWindow 0.1 0.1),
+      ("M-=", C.swapNextScreen),
 
       ("M-S-n", withFocused $ \w -> sendMessage $ VC.DownOrRight w),
       ("M-S-p", withFocused $ \w -> sendMessage $ VC.UpOrLeft w),
