@@ -53,12 +53,15 @@ import qualified XMonad.Util.ExtensibleState as XS
 import Data.Time.Clock.POSIX (getPOSIXTime, POSIXTime)
 import qualified Debug.Trace as DT
 
+import qualified Graphics.X11.XTest as XTest
+import Control.Concurrent (threadDelay)
+
 -- the last series of scroll events
-data ScrollEvents = ScrollEvents Int [POSIXTime] deriving Typeable
+data ScrollEvents = ScrollEvents Button [POSIXTime] deriving Typeable
 instance ExtensionClass ScrollEvents where
   initialValue = ScrollEvents 0 []
 
-handleScrollButton simbutton window = do
+accelerate simbutton window = do
   (ScrollEvents last times) <- XS.get
   -- now we want to produce a rate
   now <- io getPOSIXTime
@@ -66,10 +69,9 @@ handleScrollButton simbutton window = do
   let rate = (fromIntegral $ length times')
   -- now we want to generate some number of scroll events, based on some kind of acceleration function
   let n = 1 + if simbutton == last then (floor ((rate/2.0) ** 1.25)) else 0
-  spawn $ "xdotool click " ++ " --delay 2 --repeat " ++ (show n) ++
-    --" --window " ++ (show window) ++
-
-    " " ++ (show simbutton)
+  withDisplay $ \d ->
+    VC.timesX n $
+    io $ XTest.fakeButtonPress d simbutton >> threadDelay 5
   XS.put (ScrollEvents simbutton times')
 
 as n x = Ren.renamed [Ren.Replace n] x
@@ -169,8 +171,8 @@ main = xmonad $
     `additionalMouseBindings`
     -- this is mod scrollwheel
     [
-      ((0, 9), handleScrollButton 4),
-      ((0, 10), handleScrollButton 5),
+      ((0, 9), accelerate 4),
+      ((0, 10), accelerate 5),
       ((mod4Mask, 9), const $ spawn "xdotool key --clearmodifiers XF86AudioLowerVolume"),
       ((mod4Mask, 10), const $ spawn "xdotool key --clearmodifiers XF86AudioRaiseVolume")
     ]
