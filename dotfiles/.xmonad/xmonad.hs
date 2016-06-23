@@ -7,7 +7,7 @@ import XMonad.Layout.LayoutCombinators
 import System.Exit
 import XMonad.Util.Themes
 import XMonad.Config.Desktop
-import System.Taffybar.Hooks.PagerHints (pagerHints)
+
 import qualified XMonad.Layout.Renamed as Ren
 import qualified XMonad.Layout.MouseResizableTile as MRT
 import qualified XMonad.Actions.DwmPromote as DWM
@@ -24,6 +24,7 @@ import qualified XMonad.Actions.CycleRecentWS as Recent
 import qualified XMonad.Layout.BoringWindows as Boring
 
 import XMonad.Hooks.EwmhDesktops (fullscreenEventHook)
+
 import XMonad.Hooks.Place
 import XMonad.Hooks.ManageHelpers
 import XMonad.Actions.RotSlaves
@@ -35,48 +36,20 @@ import Data.List (isInfixOf, (\\))
 import Data.Char (toLower)
 import Data.Maybe (isJust, fromJust, listToMaybe)
 
-import Control.Monad (when)
-
 import qualified XMonad.Layout.LimitWindows as Limit
 
 import qualified XMonad.Layout.VarialColumn as VC
 
 import XMonad.Layout.LayoutModifier
 
-import XMonad.Actions.ShowText (flashText, defaultSTConfig)
-import XMonad.Layout.ShowWName
-
 import Data.Maybe (fromMaybe)
 import qualified XMonad.Actions.CycleWS as C
 
-import qualified XMonad.Util.ExtensibleState as XS
-import Data.Time.Clock.POSIX (getPOSIXTime, POSIXTime)
-import qualified Debug.Trace as DT
-
-import qualified Graphics.X11.XTest as XTest
-import Control.Concurrent (threadDelay)
 import XMonad.Actions.Warp (warpToWindow)
-import Data.Monoid--All
-import Data.Bits ( testBit )
 
--- the last series of scroll events
-data ScrollEvents = ScrollEvents Button [POSIXTime] deriving Typeable
-instance ExtensionClass ScrollEvents where
-  initialValue = ScrollEvents 0 []
+import XMonad.Util.AccelerateScroll (accelerate)
 
-accelerate simbutton = do
-  (ScrollEvents last times) <- XS.get
-  -- now we want to produce a rate
-  now <- io getPOSIXTime
-  let times' = now:(filter (\x -> now - x < 0.8) times)
-  let rate = (fromIntegral $ length times')
-  -- now we want to generate some number of scroll events, based on some kind of acceleration function
-  let n = 1 + if simbutton == last then (floor ((rate/2.0) ** 1.25)) else 0
-  DT.traceShow (n, "button simulations") $
-    withDisplay $ \d ->
-                    VC.timesX n $
-                    io $ XTest.fakeButtonPress d simbutton >> threadDelay 5
-  XS.put (ScrollEvents simbutton times')
+import System.Taffybar.Hooks.PagerHints (pagerHints)
 
 as n x = Ren.renamed [Ren.Replace n] x
 
@@ -94,13 +67,7 @@ instance LayoutModifier AddCount a where
 
 addCount = ModifiedLayout ((AddCount 0 0) :: AddCount Window)
 
-layout = -- showWName' defaultSWNConfig
-         -- {
-         --   swn_font = "xft:Sans:pixelsize=32"
-         -- , swn_bgcolor = "orange"
-         -- , swn_fade = 0.5
-         -- } $
-         XMonad.Layout.NoBorders.smartBorders $
+layout = XMonad.Layout.NoBorders.smartBorders $
          addCount $
          Boring.boringAuto $ (tiled ||| twocol ||| full)
   where
@@ -160,30 +127,20 @@ eventHooks config = config {
                     fullscreenEventHook
   }
 
-
--- unfortunately this is not workable, because the hook is not triggered when a button is held down
--- horizontalScrollSimulationHook :: Event -> X All
--- horizontalScrollSimulationHook (ButtonEvent {ev_button = b, ev_state = st}) =
---   -- | (b == 9 || b == 10) && (testBit st 16) = do
---     --  accelerate (b - 3)
---       return $ DT.traceShow (b, st) $ All True
--- --  | otherwise = return $ All True
--- horizontalScrollSimulationHook _ = return $ All True
-
--- unfortunately this will not produce fake modifier release
---sendKey k =
---  withDisplay $ \d -> io $ XTest.sendKey d [] k
-
 bscrollup = 4
 bscrolldown = 5
 bccw = 9
 bcw = 10
 
-main = xmonad $
-  manageHooks $
-  eventHooks $
-  pagerHints $
-  desktopConfig
+typeKey :: String -> X ()
+typeKey k = spawn $ "xdotool key --clearmodifiers " ++ k
+
+main = do
+  xmonad $
+    manageHooks $
+    eventHooks $
+    pagerHints $
+    desktopConfig
     { modMask     = mod4Mask
     , layoutHook = desktopLayoutModifiers $
                    layout
@@ -196,8 +153,8 @@ main = xmonad $
     [
       ((0, bcw),  const $ accelerate bscrolldown),
       ((0, bccw), const $ accelerate bscrollup),
-      ((mod4Mask, bcw), const $ spawn "xdotool key --clearmodifiers XF86AudioRaiseVolume"),
-      ((mod4Mask, bccw), const $ spawn "xdotool key --clearmodifiers XF86AudioLowerVolume")
+      ((mod4Mask, bcw), const $ typeKey "XF86AudioRaiseVolume"),
+      ((mod4Mask, bccw), const $ typeKey "XF86AudioLowerVolume")
     ]
     `removeKeysP`
     [p ++ [n] | p <- ["M-", "M-S-"], n <- ['1'..'9']]
@@ -251,12 +208,12 @@ main = xmonad $
       ("M-c c", withFocused $ \w -> sendMessage $ VC.GrabColumn w),
       ("M-c h", withFocused $ \w -> sendMessage $ VC.GrabRow w),
       ("M-c e", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 1 w),
-       ("M-c q", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 0.5 w),
+      ("M-c q", withFocused $ \w -> sendMessage $ VC.EqualizeColumn 0.5 w),
 
-       ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen deltaw 0 w),
-       ("M-S-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-deltaw) 0 w),
-       ("M-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 deltah w),
-       ("M-S-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 (-deltah) w)
+      ("M-u", withFocused $ \w -> sendMessage $ VC.Embiggen deltaw 0 w),
+      ("M-S-u", withFocused $ \w -> sendMessage $ VC.Embiggen (-deltaw) 0 w),
+      ("M-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 deltah w),
+      ("M-S-i", withFocused $ \w -> sendMessage $ VC.Embiggen 0 (-deltah) w)
      ]
      ++
      [ ("M-" ++ k, ((sendMessage $ JumpToLayout k))) | k <- ["s","d","f"] ]
