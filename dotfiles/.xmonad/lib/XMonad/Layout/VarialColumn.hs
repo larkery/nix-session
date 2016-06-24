@@ -31,12 +31,17 @@ data LS a = LS
             -- ^ gap between wins
 
             balanceColumns :: Int,
+            -- ^ when we get to this many columns, things are rebalanced automatically
             insertColumns :: Int,
-            firstColumnLimit :: Int,
+            -- ^ when there are new windows, we insert columns up to
+            -- this many (so if this was 3, the layout would prefer 3
+            -- column)
 
             draggers :: [WDragger],
-
+            -- ^ internal storage of drag handles
             lastContent :: [a]
+            -- ^ what windows did we show last; this is to make new
+            -- windows appear where wanted.
           } deriving (Read, Show)
 
 data Dragger = WindowDragger Position Dimension Int Int |
@@ -45,15 +50,15 @@ data Dragger = WindowDragger Position Dimension Int Int |
 
 type WDragger = (Window, Dragger)
 
+-- default layout that you may want to use
 varial = LS { cols = (Cols S.empty S.empty),
               gap = 5,
               balanceColumns = 1,
               insertColumns = 2,
               draggers = [],
-              lastContent = [],
-              firstColumnLimit = 1
+              lastContent = []
               }
-         
+
 ins :: S.Seq a -> Int -> S.Seq a -> S.Seq a
 ins a n s = ((S.take n s) >< a) >< (S.drop n s)
 
@@ -96,7 +101,7 @@ changeS n r' s
                     a1 = S.index s (n+1)
                     r = min (a0 + a1 - lim) $ max r' lim in
                   norm $ S.update n r $ S.update (n+1) (a1 - (r - a0)) s
-  
+
 -- insert a new column at n
 insertCol :: Int -> LS a -> LS a
 insertCol n s@(LS {cols = (Cols rs cs)}) = s { cols = cols' }
@@ -142,7 +147,7 @@ timesX n a
 -- values need rebalancing to equal the total, or the next window needs to get it.
 
 -- LAYOUT ALGO
-layout :: LS a -> Rectangle -> W.Stack a -> ([(a, Rectangle)], Maybe (LS a)) 
+layout :: LS a -> Rectangle -> W.Stack a -> ([(a, Rectangle)], Maybe (LS a))
 layout ls screen stack =
   let ls'    = update ls stack
       rects  = windowRects (fromMaybe ls ls') screen stack in
@@ -155,7 +160,7 @@ update
            insertColumns = ic })
   stack@(W.Stack f u d)
   | newCount < oldCount =
-    Just $ balance $ times (oldCount - newCount) (deleteRow delFromC delFromR) ls 
+    Just $ balance $ times (oldCount - newCount) (deleteRow delFromC delFromR) ls
   | (newCount > oldCount) && (ic > numColumns) = -- windows added, stick them all in a column and balance
     Just $ balance $ times (newCount - oldCount - 1) (insertRow focusCol 0) $ insertCol focusCol ls
   | newCount > oldCount = -- windows added, but no columns spare, insert some rows
@@ -208,8 +213,8 @@ cutup ax g screen slices
 
     rot V r = r
     rot H (Rectangle x y w h) = Rectangle y x h w
-    
-    sub :: Rectangle -> (Rational, Rational) -> Rectangle 
+
+    sub :: Rectangle -> (Rational, Rational) -> Rectangle
     sub (Rectangle x y w h) (l, r) = Rectangle x y' w h'
       where
         g' = if l > 0 then g else 0
@@ -217,7 +222,7 @@ cutup ax g screen slices
         h' = (floor ((fromIntegral h) * (r - l))) - (fromIntegral g')
         y' :: Position
         y' = (floor  ((fromIntegral y) + (fromIntegral h) * l)) + (fromIntegral g')
-        
+
 -- the instances which do the stuff in the X monad
 
 splitPlaces :: [a] -> [Int] -> [[a]]
@@ -225,7 +230,7 @@ splitPlaces _ [] = []
 splitPlaces as (0:is) = splitPlaces as is
 splitPlaces as (i:is) = a0:(splitPlaces a1 is)
   where (a0, a1) = splitAt i as
-        
+
 data Msg =
   ToNewColumn  Window |
   OccupyMaster Window |
@@ -244,16 +249,16 @@ data Msg =
 instance Message Msg
 
 instance LayoutClass LS Window where
-  description (LS {cols = (Cols rs cs)}) = (show $ S.length cs) ++ "col" 
+  description (LS {cols = (Cols rs cs)}) = (show $ S.length cs) ++ "col"
 
   doLayout state screen stack = do
     let (ws, statem) = layout state screen stack
     destroyDraggers state
     state' <- addDraggers screen ws (fromMaybe state statem)
-    let state'' = state' 
+    let state'' = state'
                { lastContent = W.integrate stack }
     return (ws, Just state'')
-  
+
   handleMessage state@(LS {cols = (Cols rs cs), lastContent = lcon}) msg
     -- row/column operations (shift column, move window out of column or into column, eat column)
     -- todo: tidy up and wrap around
@@ -269,16 +274,16 @@ instance LayoutClass LS Window where
         do focus w
            windows $ W.shiftMaster
            let n = (S.length $ S.index cs 0) - 1
-           return $ Just $ (times n $ deleteRow 0 0) $ (times n $ insertRow 1 0) state       
+           return $ Just $ (times n $ deleteRow 0 0) $ (times n $ insertRow 1 0) state
 
     | (Just (GrabColumn w)) <- fromMessage msg =
         findWindowAnd w $ \(col,row,_) ->
-                            return $ Just $ state { cols = (Cols rs (S.adjust (grab row) col cs)) } 
+                            return $ Just $ state { cols = (Cols rs (S.adjust (grab row) col cs)) }
 
     | (Just (GrabRow w)) <- fromMessage msg =
         findWindowAnd w $ \(col,_ , _) ->
                             return $ Just $ state { cols = (Cols (grab col rs) cs) }
-  
+
     | (Just (EqualizeColumn gen w)) <- fromMessage msg =
         findWindowAnd w $ \(col, _, _) ->
                             return $ Just $ state { cols = (Cols rs ((S.update
@@ -296,8 +301,8 @@ instance LayoutClass LS Window where
                                { cols = (Cols
                                          (change dr col rs)
                                          (S.adjust (change dc row) col cs)) }
-    
-                                  
+
+
     | (Just (SetColumn c r)) <- fromMessage msg =
         let rs' = changeS c r rs in
           return $ Just $ state { cols = (Cols rs' cs) }
@@ -305,7 +310,7 @@ instance LayoutClass LS Window where
     | (Just (SetRow c r ra)) <- fromMessage msg =
         let cs' = S.adjust (changeS r ra) c cs in
             return $ Just $ state { cols = (Cols rs cs') }
-    
+
     | (Just Hide) <- fromMessage msg =
         destroyDraggers state >> return (Just $ state { draggers = [], lastContent = [] })
 
@@ -314,7 +319,7 @@ instance LayoutClass LS Window where
 
     | (Just e) <- fromMessage msg :: Maybe Event =
         handleResize e (draggers state) >> return Nothing
-    
+
     -- resize operations (set fraction, expand in direction)
     | otherwise = return Nothing
     where lastCol = (S.length cs) - 1
@@ -330,17 +335,17 @@ instance LayoutClass LS Window where
                                  case maybeArgs of
                                    Just a -> f a
                                    _ -> return Nothing
-                                                       
-          goUpOrLeft (col, row, index) = 
+
+          goUpOrLeft (col, row, index) =
             let rowlength = S.length $ S.index cs col
                 leftmost = col == 0
                 prmax = S.length $ S.index cs (col - 1)
                 result
                   | row > 0 = (windows $ W.swapUp) >> return Nothing
-                  | rowlength == 1 && not leftmost = return $ Just $ insertRow (col - 1) (prmax - 1) $ deleteRow col row state 
-                  | otherwise = return $ Just $ insertCol col $ deleteRow col row state 
+                  | rowlength == 1 && not leftmost = return $ Just $ insertRow (col - 1) (prmax - 1) $ deleteRow col row state
+                  | otherwise = return $ Just $ insertCol col $ deleteRow col row state
             in result
-            
+
           goDownOrRight (col, row, index) =
             let rowlength = S.length $ S.index cs col
                 rightmost = col + 1 == S.length cs
@@ -386,14 +391,14 @@ addDraggers (Rectangle sx sy sw sh) ws state@(LS { cols = (Cols rs cs) }) =
   let g = (fromIntegral $ (gap state)) :: Dimension
 
       windowColumns = zip [0..] $ splitPlaces ws $ map S.length $ F.toList cs
-      
+
       columnDraggers bw = map (columnDragger bw) $ drop 1 $ reverse windowColumns
       columnDragger bw (col, ((_,(Rectangle wx wy ww wh)):_)) =
-        let x = (wx + (fromIntegral ww)) in 
+        let x = (wx + (fromIntegral ww)) in
           ((ColumnDragger wx sw col), (Rectangle (x - (fromIntegral bw)) sy (g + 2 * bw) sh))
 
       -- windowDragger :: (a, Rectangle) -> (a, Rectangle)
-      -- windowDragger (w, ) = 
+      -- windowDragger (w, ) =
 
       windowDraggers bw = (flip concatMap) windowColumns $
                           \(column, windows) -> map (windowDragger bw column) $
@@ -421,7 +426,7 @@ addDraggers (Rectangle sx sy sw sh) ws state@(LS { cols = (Cols rs cs) }) =
           io $ allocaSetWindowAttributes $ \a -> do
             set_override_redirect a True
             createWindow d rw x y w h 0 0 inputOnly visual attrmask a
-        
+
         io $ selectInput d win (exposureMask .|. buttonPressMask)
         cursor <- io $ createFontCursor d g
         io $ defineCursor d win cursor

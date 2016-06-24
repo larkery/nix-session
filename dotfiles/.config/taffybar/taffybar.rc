@@ -1,5 +1,5 @@
 style "taffybar-default" {
-  color["black"] = "#444444"
+  color["black"] = "#000000"
   color["white"] = "#ffffff"
   color["green"] = "#00ff00"
   color["red"]   = "#ff0000"
@@ -23,4 +23,4 @@ style "taffybar-notification-button" = "taffybar-default" {
 widget "Taffybar*" style "taffybar-default"
 widget "Taffybar*WindowSwitcher*label" style "taffybar-active-window"
 widget "*NotificationCloseButton" style "taffybar-notification-button"
-gtk-font-name = "Sans 8"
+gtk-font-name = "Mono 8"
