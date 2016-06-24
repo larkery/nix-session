@@ -23,4 +23,4 @@ style "taffybar-notification-button" = "taffybar-default" {
 widget "Taffybar*" style "taffybar-default"
 widget "Taffybar*WindowSwitcher*label" style "taffybar-active-window"
 widget "*NotificationCloseButton" style "taffybar-notification-button"
-gtk-font-name = "Mono 8"
+gtk-font-name = "Mono 10"

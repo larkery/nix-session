@@ -70,7 +70,8 @@ pagerConfig = defaultPagerConfig
     activeWindow     = tag "b" . colorize "white" "" . escape
   , activeWorkspace  = tag "b" . tag "u" . escape
   , visibleWorkspace = tag "b" . escape
-  , hiddenWorkspace  = tag "i" . escape
+  , hiddenWorkspace  = escape
+  , activeLayout = colorize "orange" "" . escape
   }
 
 main = do
@@ -92,7 +93,7 @@ main = do
       pager = taffyPagerNew pagerConfig
 
   defaultTaffybar defaultTaffybarConfig
-                  { barHeight = 18
+                  { barHeight = 20
                   , startWidgets = [ pager ]
                   , endWidgets = [ tray, clock
                                  , bat

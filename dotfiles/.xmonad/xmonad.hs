@@ -86,8 +86,8 @@ bcw = 10
 typeKey :: String -> X ()
 typeKey k = spawn $ "xdotool key --clearmodifiers " ++ k
 
-minWs = "_"
-wsNames = (map show [1..9]) ++ [minWs]
+minWs = "*"
+wsNames = ["q","w","e","r"] ++ (map show [5..9]) ++ [minWs]
 
 interestingWS = C.WSIs $
   do hs <- gets (map W.tag . W.hidden . windowset)
@@ -143,6 +143,7 @@ main = do
 
       ("M-g",   goToSelected gsconfig),
       ("M-b",   bringSelected gsconfig),
+      ("M-S-b", bringMinned gsconfig),
 
       ("M-v",   sendMessage ToggleStruts),
 
@@ -252,3 +253,9 @@ goToSelected :: GS.GSConfig Window -> X ()
 goToSelected c = do
   cur <- gets (W.tag . W.workspace . W.current . windowset)
   withSelectedWindow (\t _ -> t /= minWs && t/=cur) (windows . W.focusWindow) c
+
+bringMinned :: GS.GSConfig Window -> X ()
+bringMinned = withSelectedWindow (\t _ -> t == minWs) $ \w -> do
+    windows (bringWindow w)
+    XMonad.focus w
+    windows W.shiftMaster
