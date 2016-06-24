@@ -179,11 +179,10 @@ main = do
      ++
      [("M-" ++ k, ((sendMessage $ JumpToLayout k))) | k <- ["s","d","f"]]
      ++
-     [("M-" ++ (show n), (windows $ W.greedyView ws)) | (n, ws) <- zip [1..9] wsNames]
-     ++
-     [("M-" ++ k, (windows $ W.greedyView ws)) | (k, ws) <- zip ["q","w","e","r"] wsNames]
-     ++
-     [("M-S-" ++ (show n), (windows $ W.shift ws)) | (n, ws) <- zip [1..9] wsNames]
+     [(mod ++ k, (a ws)) |
+       ks <- [["q", "w", "e", "r"], map show [1..9]],
+       (k, ws) <- zip ks wsNames,
+       (mod, a) <- [("M-", windows . W.greedyView), ("M-S-", windows . W.shift)] ]
     )
   where
     deltaw :: Rational
